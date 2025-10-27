@@ -23,13 +23,12 @@ fun SplashScreen(
 ) {
     val scale = remember { Animatable(0f) }
 
-    // Animasi scale + delay navigasi
     LaunchedEffect(Unit) {
         scale.animateTo(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 700)
         )
-        delay(1200) // total waktu tampil splash
+        delay(1200)
         onNavigateNext()
     }
 

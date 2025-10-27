@@ -5,7 +5,6 @@ object Routes {
     const val ONBOARDING = "onboarding"
     const val SELECTROLE = "select_role"
 
-    // Auth with role
     const val SIGNUP = "signup/{role}"
     const val SIGNIN = "signin/{role}"
 
