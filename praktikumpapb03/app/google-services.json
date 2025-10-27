@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "259998317333",
+    "project_id": "notes-app-papb",
+    "storage_bucket": "notes-app-papb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:259998317333:android:3440210851ed1b8460071c",
+        "android_client_info": {
+          "package_name": "com.example.praktikum_papb_03"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxQhfOSHVQUCSvrbSVBFjdPd_NUAplzBU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
