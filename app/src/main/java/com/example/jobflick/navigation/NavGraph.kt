@@ -2,11 +2,15 @@ package com.example.jobflick.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.jobflick.features.onboarding.presentation.OnboardingScreen
 import com.example.jobflick.features.onboarding.presentation.SplashScreen
 import com.example.jobflick.features.onboarding.presentation.RoleSelectionScreen
+import com.example.jobflick.features.auth.presentation.SignUpScreen
+import com.example.jobflick.features.auth.presentation.SignInScreen
 
 @Composable
 fun NavGraph(
@@ -14,6 +18,7 @@ fun NavGraph(
     startDestination: String = Routes.SPLASH
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
+
         composable(Routes.SPLASH) {
             SplashScreen(
                 onNavigateNext = {
@@ -38,8 +43,42 @@ fun NavGraph(
 
         composable(Routes.SELECTROLE) {
             RoleSelectionScreen(
-                onJobSeeker = { /* TODO: nav ke flow jobseeker */ },
-                onRecruiter = { /* TODO: nav ke flow recruiter */ }
+                onJobSeeker = { navController.navigate(Routes.signup("jobseeker")) },
+                onRecruiter = { navController.navigate(Routes.signup("recruiter")) }
+            )
+        }
+
+        composable(
+            route = Routes.SIGNUP,
+            arguments = listOf(navArgument("role") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val role = backStackEntry.arguments?.getString("role") ?: "jobseeker"
+
+            SignUpScreen(
+                onSubmit = { email, pass ->
+                },
+                onClickSignIn = {
+                    navController.navigate(Routes.signin(role)) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = Routes.SIGNIN,
+            arguments = listOf(navArgument("role") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val role = backStackEntry.arguments?.getString("role") ?: "jobseeker"
+
+            SignInScreen(
+                onSubmit = { email, pass ->
+                },
+                onClickSignUp = {
+                    navController.navigate(Routes.signup(role)) {
+                        launchSingleTop = true
+                    }
+                }
             )
         }
     }
