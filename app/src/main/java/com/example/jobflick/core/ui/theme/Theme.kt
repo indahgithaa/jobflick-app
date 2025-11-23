@@ -4,9 +4,19 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-private val LightColors = lightColorScheme()
+private val LightColors = lightColorScheme(
+    background = Color.White,
+    surface = Color.White,
+
+    primary = Color.Black,
+    onPrimary = Color.White,
+    onBackground = Color.Black,
+    onSurface = Color.Black,
+)
+
 private val DarkColors = darkColorScheme()
 
 @Composable
@@ -19,8 +29,11 @@ fun AppTheme(
 
     val colorScheme =
         if (enableDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (useDarkTheme) dynamicDarkColorScheme(context)
-            else dynamicLightColorScheme(context)
+            if (useDarkTheme) {
+                dynamicDarkColorScheme(context)
+            } else {
+                LightColors
+            }
         } else {
             if (useDarkTheme) DarkColors else LightColors
         }

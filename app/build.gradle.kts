@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.20"
 }
 
 android {
@@ -50,10 +52,18 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.navigation.runtime.ktx)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.compose.animation.core.lint)
+
+    implementation("androidx.navigation:navigation-runtime-ktx:2.8.3")
+    implementation("androidx.navigation:navigation-compose:2.8.3")
+    implementation("androidx.compose.foundation:foundation:1.7.3")
+
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.ktor:ktor-client-cio:2.3.7")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    implementation("io.ktor:ktor-client-logging:2.3.7")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
