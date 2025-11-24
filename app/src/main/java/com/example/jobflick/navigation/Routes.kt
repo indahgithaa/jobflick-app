@@ -20,11 +20,19 @@ object Routes {
 
     // MAIN TABS
     const val DISCOVER = "discover"
-    const val ROADMAP = "roadmap"       // pilih role
+    const val ROADMAP = "roadmap"
     const val MESSAGE = "message"
     const val PROFILE = "profile"
 
-    // ROADMAP FLOW (tanpa internal routing)
+    // PROFILE EXTRA
+    const val PROFILE_SETTINGS = "profileSettings"
+    const val PROFILE_SEE_PROFILE = "profileSeeProfile"
+
+    // PROFILE JOB DETAIL
+    const val PROFILE_JOB_DETAIL = "profileJobDetail/{jobId}"
+    fun profileJobDetail(jobId: String) = "profileJobDetail/$jobId"
+
+    // ROADMAP FLOW
     const val ROADMAP_OVERVIEW = "roadmapOverview/{roleName}"
     fun roadmapOverview(roleName: String) = "roadmapOverview/$roleName"
 
