@@ -1,5 +1,7 @@
 package com.example.jobflick.features.profile.presentation.components
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,8 +19,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.jobflick.core.common.toTimeAgoLabel
 import com.example.jobflick.features.profile.domain.model.Job
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun JobItemCard(
     job: Job,
@@ -78,8 +82,9 @@ fun JobItemCard(
         Spacer(Modifier.width(12.dp))
 
         Column(horizontalAlignment = Alignment.End) {
+            // waktu statusnya (saved/applied/match) relatif, mis. "2 hari lalu"
             Text(
-                text = job.dateText,
+                text = job.statusTimestamp.toTimeAgoLabel(),
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = Color(0xFFB0B0B0)
                 )

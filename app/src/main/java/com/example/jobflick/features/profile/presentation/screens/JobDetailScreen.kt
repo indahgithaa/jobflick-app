@@ -1,5 +1,7 @@
 package com.example.jobflick.features.profile.presentation.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,10 +18,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.jobflick.core.common.toDaysAgoLabel
+import com.example.jobflick.core.common.toTimeAgoLabel
 import com.example.jobflick.features.profile.domain.model.Job
 import com.example.jobflick.features.profile.domain.model.JobCategory
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun JobDetailScreen(
     job: Job,
@@ -120,12 +127,20 @@ fun JobDetailScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun DetailHeader(job: Job) {
     Column {
-        if (job.category == JobCategory.MATCH) {
+        // Baris status (atas)
+        val statusTitle = when (job.category) {
+            JobCategory.MATCH -> "Match"
+            JobCategory.APPLIED -> "Diproses"
+            JobCategory.SAVED -> null
+        }
+
+        statusTitle?.let {
             Text(
-                text = "Diproses",
+                text = it,
                 color = Color(0xFF0059C9),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.sp
@@ -133,9 +148,11 @@ private fun DetailHeader(job: Job) {
             Spacer(Modifier.height(4.dp))
         }
 
-        // Baris dengan icon jam + tanggal (di sini pakai teks saja)
+        // Baris bawah: dilamar / diterima / disimpan pada (hari, tanggal, pukul)
+        val statusLine = formatStatusLine(job.category, job.statusTimestamp)
+
         Text(
-            text = job.dateText,
+            text = statusLine,
             style = MaterialTheme.typography.bodySmall.copy(
                 color = Color(0xFF8E8E8E)
             )
@@ -151,7 +168,10 @@ private fun CompanyRow(job: Job) {
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(Color(0xFFF2F2F2), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)),
+                .background(
+                    Color(0xFFF2F2F2),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                ),
             contentAlignment = Alignment.Center
         ) {
             // placeholder logo, sama seperti di list
@@ -181,6 +201,7 @@ private fun CompanyRow(job: Job) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun JobInfoRow(job: Job) {
     Row(
@@ -198,7 +219,7 @@ private fun JobInfoRow(job: Job) {
                 )
             )
             Text(
-                text = job.postedDaysAgo.toDaysAgoLabel(),
+                text = job.postedTimestamp.toTimeAgoLabel(),
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = Color(0xFF0059C9),
                     fontWeight = FontWeight.SemiBold
@@ -296,5 +317,38 @@ private fun SavedJobActions(
         ) {
             Text("Lamar")
         }
+    }
+}
+
+/**
+ * Menghasilkan teks:
+ * - MATCH   -> "Diterima pada Senin, 25 November 2024, pukul 14.30"
+ * - APPLIED -> "Dilamar pada Senin, 25 November 2024, pukul 14.30"
+ * - SAVED   -> "Disimpan pada Senin, 25 November 2024, pukul 14.30"
+ *
+ * `rawTimestamp` diasumsikan format ISO 8601 (OffsetDateTime).
+ */
+@RequiresApi(Build.VERSION_CODES.O)
+private fun formatStatusLine(
+    category: JobCategory,
+    rawTimestamp: String
+): String {
+    val prefix = when (category) {
+        JobCategory.MATCH -> "Diterima pada"
+        JobCategory.APPLIED -> "Dilamar pada"
+        JobCategory.SAVED -> "Disimpan pada"
+    }
+
+    return try {
+        val odt = OffsetDateTime.parse(rawTimestamp)
+        val formatter = DateTimeFormatter.ofPattern(
+            "EEEE, dd MMMM yyyy, 'pukul' HH.mm",
+            Locale("id", "ID")
+        )
+        val formatted = odt.format(formatter)
+        "$prefix $formatted"
+    } catch (e: DateTimeParseException) {
+        // fallback kalau parsing gagal
+        prefix
     }
 }

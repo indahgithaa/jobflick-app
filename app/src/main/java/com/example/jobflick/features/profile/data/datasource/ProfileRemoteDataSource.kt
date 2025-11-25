@@ -13,14 +13,10 @@ class ProfileRemoteDataSource {
         return Profile(
             id = "user_01",
             name = "Aulia Rahma",
-            photoUrl = null // gunakan foto default di UI
+            photoUrl = null
         )
     }
 
-    /**
-     * Mengambil semua job dari server (dummy data).
-     * Nanti bisa diganti dengan PocketBaseHttp.getFullList("jobs")
-     */
     suspend fun getJobs(): List<Job> {
         delay(400)
 
@@ -49,14 +45,13 @@ class ProfileRemoteDataSource {
                 companyLogoUrl = null,
                 jobTitle = "Software Engineer",
                 location = "Jakarta, Indonesia",
-                postedDaysAgo = 3, // diposting 3 hari lalu
+                postedTimestamp = "2024-11-24T02:14:00.123456+00:00",   // waktu diposting
                 level = "Junior",
                 salaryRange = "Rp8–10 juta/bulan",
                 workType = "Full time, Remote",
                 skills = listOf("Java", "Python", "AWS"),
-                statusLabel = "Match",
                 category = JobCategory.MATCH,
-                dateText = "2 hari lalu",
+                statusTimestamp = "2024-11-24T02:14:00.123456+00:00",   // waktu status MATCH
                 description = description,
                 minimumQualifications = qualifications,
                 aboutCompany = aboutCompany
@@ -69,14 +64,13 @@ class ProfileRemoteDataSource {
                 companyLogoUrl = null,
                 jobTitle = "Back-End Developer",
                 location = "Jakarta, Indonesia",
-                postedDaysAgo = 5,
+                postedTimestamp = "2024-11-23T02:14:00.123456+00:00",
                 level = "Junior",
                 salaryRange = "Rp9–11 juta/bulan",
                 workType = "Full time",
                 skills = listOf("Go", "Kotlin", "Microservices"),
-                statusLabel = "Wawancara",
                 category = JobCategory.MATCH,
-                dateText = "2 hari lalu",
+                statusTimestamp = "2024-11-23T02:14:00.123456+00:00",
                 description = description,
                 minimumQualifications = qualifications,
                 aboutCompany = aboutCompany
@@ -89,14 +83,13 @@ class ProfileRemoteDataSource {
                 companyLogoUrl = null,
                 jobTitle = "Software Engineer",
                 location = "Jakarta, Indonesia",
-                postedDaysAgo = 0, // hari ini
+                postedTimestamp = "2024-11-22T02:14:00.123456+00:00",
                 level = "Junior",
                 salaryRange = "Rp10–15 juta/bulan",
                 workType = "Full time",
                 skills = listOf("Kotlin", "Java", "Distributed Systems"),
-                statusLabel = null,
                 category = JobCategory.SAVED,
-                dateText = "2 hari lalu",
+                statusTimestamp = "2024-11-22T02:14:00.123456+00:00",   // waktu DISIMPAN
                 description = description,
                 minimumQualifications = qualifications,
                 aboutCompany = aboutCompany
@@ -109,14 +102,13 @@ class ProfileRemoteDataSource {
                 companyLogoUrl = null,
                 jobTitle = "Junior Software Engineer",
                 location = "Jakarta, Indonesia",
-                postedDaysAgo = 2,
+                postedTimestamp = "2024-11-21T02:14:00.123456+00:00",
                 level = "Junior",
                 salaryRange = "Rp8–10 juta/bulan",
                 workType = "Full time, Remote",
                 skills = listOf("C++", "JavaScript", "C#", "Python"),
-                statusLabel = "Diproses",
                 category = JobCategory.APPLIED,
-                dateText = "2 hari lalu",
+                statusTimestamp = "2024-11-21T02:14:00.123456+00:00",   // waktu DILAMAR
                 description = description,
                 minimumQualifications = qualifications,
                 aboutCompany = aboutCompany
