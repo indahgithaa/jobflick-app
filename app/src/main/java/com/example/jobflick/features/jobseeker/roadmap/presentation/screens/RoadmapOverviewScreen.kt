@@ -9,14 +9,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.jobflick.core.ui.components.JFLinearProgress
 import com.example.jobflick.core.ui.theme.BluePrimary
 import com.example.jobflick.features.jobseeker.roadmap.domain.model.RoadmapModule
 import com.example.jobflick.features.jobseeker.roadmap.domain.model.RoadmapRole
 import com.example.jobflick.features.jobseeker.roadmap.presentation.components.RoadmapModuleCard
-import com.example.jobflick.features.jobseeker.roadmap.presentation.components.RoadmapModuleStatus
 import com.example.jobflick.features.jobseeker.roadmap.presentation.components.RoadmapTopBar
 import kotlin.math.roundToInt
 
@@ -63,11 +61,8 @@ fun RoadmapOverviewScreen(
             Spacer(Modifier.height(20.dp))
 
             role.modules.forEachIndexed { index, module ->
-                val status = when (index) {
-                    0 -> RoadmapModuleStatus.COMPLETED   // kartu 1 → Selesai (biru)
-                    1 -> RoadmapModuleStatus.IN_PROGRESS // kartu 2 → Mulai (oren)
-                    else -> RoadmapModuleStatus.LOCKED   // sisanya → Terkunci (abu)
-                }
+
+                val status = module.status   // ambil dari domain, bukan lagi when(index)
 
                 RoadmapModuleCard(
                     index = index + 1,
@@ -75,7 +70,6 @@ fun RoadmapOverviewScreen(
                     status = status,
                     onClick = { onSelectModule(module) }
                 )
-
             }
 
             Spacer(Modifier.height(24.dp))

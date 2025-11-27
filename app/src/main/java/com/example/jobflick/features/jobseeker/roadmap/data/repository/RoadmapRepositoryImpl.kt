@@ -1,14 +1,26 @@
 package com.example.jobflick.features.jobseeker.roadmap.data.repository
 
-import com.example.jobflick.features.jobseeker.roadmap.data.remote.RoadmapRemoteDataSource
+import com.example.jobflick.features.jobseeker.roadmap.data.datasource.RoadmapRemoteDataSource
 import com.example.jobflick.features.jobseeker.roadmap.domain.model.RoadmapRole
 import com.example.jobflick.features.jobseeker.roadmap.domain.repository.RoadmapRepository
 
 class RoadmapRepositoryImpl(
-    private val remote: RoadmapRemoteDataSource
+    private val remoteDataSource: RoadmapRemoteDataSource
 ) : RoadmapRepository {
 
+    override fun getAvailableRoles(): List<String> {
+        return remoteDataSource.getAvailableRoles()
+    }
+
     override fun getRoadmapRole(roleName: String): RoadmapRole {
-        return remote.getRoadmapRole(roleName)
+        return remoteDataSource.getRoadmapRole(roleName)
+    }
+
+    override fun calculateQuizScore(
+        roleName: String,
+        moduleId: String,
+        answers: List<Int>
+    ): Int {
+        return remoteDataSource.calculateQuizScore(roleName, moduleId, answers)
     }
 }

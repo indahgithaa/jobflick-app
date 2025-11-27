@@ -19,9 +19,6 @@ import com.example.jobflick.features.auth.presentation.JobSeekerDoneRegistScreen
 import com.example.jobflick.features.auth.presentation.SignInRoute
 import com.example.jobflick.features.auth.presentation.SignUpRoute
 import com.example.jobflick.features.jobseeker.discover.presentation.screens.DiscoverScreen
-import com.example.jobflick.features.onboarding.presentation.OnboardingScreen
-import com.example.jobflick.features.onboarding.presentation.RoleSelectionScreen
-import com.example.jobflick.features.onboarding.presentation.SplashScreen
 import com.example.jobflick.features.jobseeker.profile.data.datasource.ProfileRemoteDataSource
 import com.example.jobflick.features.jobseeker.profile.data.repository.ProfileRepositoryImpl
 import com.example.jobflick.features.jobseeker.profile.domain.model.Job
@@ -33,7 +30,7 @@ import com.example.jobflick.features.jobseeker.profile.presentation.screens.Prof
 import com.example.jobflick.features.jobseeker.profile.presentation.screens.ProfileSettingsScreen
 import com.example.jobflick.features.jobseeker.profile.presentation.screens.SeeProfileScreen
 import com.example.jobflick.features.jobseeker.profile.presentation.viewmodel.ProfileViewModel
-import com.example.jobflick.features.jobseeker.roadmap.data.remote.RoadmapRemoteDataSource
+import com.example.jobflick.features.jobseeker.roadmap.data.datasource.RoadmapRemoteDataSource
 import com.example.jobflick.features.jobseeker.roadmap.data.repository.RoadmapRepositoryImpl
 import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.ArticleDetailScreen
 import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.ModuleDetailScreen
@@ -41,6 +38,9 @@ import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.Quiz
 import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.QuizScreen
 import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.RoadmapOverviewScreen
 import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.RoadmapScreen
+import com.example.jobflick.features.onboarding.presentation.OnboardingScreen
+import com.example.jobflick.features.onboarding.presentation.RoleSelectionScreen
+import com.example.jobflick.features.onboarding.presentation.SplashScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -49,6 +49,12 @@ fun NavGraph(
     startDestination: String = Routes.SPLASH,
     modifier: Modifier = Modifier
 ) {
+    // =====================================================================
+    // Manual DI level navigation (dipakai semua screen roadmap)
+    // =====================================================================
+    val roadmapRemote = remember { RoadmapRemoteDataSource() }
+    val roadmapRepository = remember { RoadmapRepositoryImpl(roadmapRemote) }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -181,8 +187,11 @@ fun NavGraph(
             arguments = listOf(navArgument("roleName") { type = NavType.StringType })
         ) { backStackEntry ->
             val roleName = backStackEntry.arguments?.getString("roleName") ?: ""
-            val repository = remember { RoadmapRepositoryImpl(RoadmapRemoteDataSource()) }
-            val roadmapRole = remember(roleName) { repository.getRoadmapRole(roleName) }
+
+            // Ambil roadmap untuk role tertentu dari repository (stateful, pakai remember)
+            val roadmapRole = remember(roleName) {
+                roadmapRepository.getRoadmapRole(roleName)
+            }
 
             RoadmapOverviewScreen(
                 role = roadmapRole,
@@ -208,8 +217,9 @@ fun NavGraph(
             val roleName = backStackEntry.arguments?.getString("roleName") ?: ""
             val moduleNumber = backStackEntry.arguments?.getInt("moduleNumber") ?: 1
 
-            val repository = remember { RoadmapRepositoryImpl(RoadmapRemoteDataSource()) }
-            val roadmapRole = remember(roleName) { repository.getRoadmapRole(roleName) }
+            val roadmapRole = remember(roleName) {
+                roadmapRepository.getRoadmapRole(roleName)
+            }
             val module = remember(roadmapRole, moduleNumber) {
                 roadmapRole.modules.first { it.number == moduleNumber }
             }
@@ -218,13 +228,12 @@ fun NavGraph(
                 role = roadmapRole,
                 module = module,
                 onBack = { navController.popBackStack() },
-                onOpenArticle = { articleTitle ->
-                    val index = module.articles.indexOf(articleTitle).coerceAtLeast(0)
+                onOpenArticle = { articleIndex ->
                     navController.navigate(
                         Routes.roadmapArticleDetail(
                             roleName = roadmapRole.name,
                             moduleNumber = module.number,
-                            articleIndex = index
+                            articleIndex = articleIndex
                         )
                     )
                 },
@@ -251,17 +260,18 @@ fun NavGraph(
             val moduleNumber = backStackEntry.arguments?.getInt("moduleNumber") ?: 1
             val articleIndex = backStackEntry.arguments?.getInt("articleIndex") ?: 0
 
-            val repository = remember { RoadmapRepositoryImpl(RoadmapRemoteDataSource()) }
-            val roadmapRole = remember(roleName) { repository.getRoadmapRole(roleName) }
+            val roadmapRole = remember(roleName) {
+                roadmapRepository.getRoadmapRole(roleName)
+            }
             val module = remember(roadmapRole, moduleNumber) {
                 roadmapRole.modules.first { it.number == moduleNumber }
             }
-            val articleTitle = module.articles.getOrNull(articleIndex) ?: ""
+            val article = module.articles.getOrNull(articleIndex)
 
             ArticleDetailScreen(
                 role = roadmapRole,
                 module = module,
-                articleTitle = articleTitle,
+                articleTitle = article?.title ?: "",
                 articleIndex = articleIndex,
                 onBack = { navController.popBackStack() },
                 onOpenArticle = { nextIndex ->
@@ -294,8 +304,10 @@ fun NavGraph(
             val roleName = backStackEntry.arguments?.getString("roleName") ?: ""
             val moduleNumber = backStackEntry.arguments?.getInt("moduleNumber") ?: 1
 
-            val repository = remember { RoadmapRepositoryImpl(RoadmapRemoteDataSource()) }
-            val roadmapRole = remember(roleName) { repository.getRoadmapRole(roleName) }
+            // pakai repository yang tadi sudah di-remember di NavGraph
+            val roadmapRole = remember(roleName) {
+                roadmapRepository.getRoadmapRole(roleName)
+            }
             val module = remember(roadmapRole, moduleNumber) {
                 roadmapRole.modules.first { it.number == moduleNumber }
             }
@@ -303,20 +315,23 @@ fun NavGraph(
             QuizScreen(
                 module = module,
                 onBack = { navController.popBackStack() },
-                onQuizFinished = { score ->
+                onQuizFinished = { answers: List<Int> ->
+                    val score = roadmapRepository.calculateQuizScore(
+                        roleName = roadmapRole.name,
+                        moduleId = module.id,
+                        answers = answers
+                    )
+
                     navController.navigate(
                         Routes.roadmapQuizDone(
                             roleName = roadmapRole.name,
                             score = score
                         )
-                    ) {
-                        popUpTo(Routes.roadmapQuiz(roleName, moduleNumber)) {
-                            inclusive = true
-                        }
-                    }
+                    ) { /* popUpTo dll */ }
                 }
             )
         }
+
 
         composable(
             route = Routes.ROADMAP_QUIZ_DONE,
@@ -339,15 +354,10 @@ fun NavGraph(
             )
         }
 
-//        // ========== MAIN TAB: MESSAGE ==========
-//        composable(Routes.MESSAGE) {
-//            MessageScreen()
-//        }
-
         // ========== MAIN TAB: PROFILE (jobs list) ==========
         composable(Routes.PROFILE) {
 
-            // manual DI
+            // manual DI profile
             val remote = remember { ProfileRemoteDataSource() }
             val repository = remember { ProfileRepositoryImpl(remote) }
             val getProfile = remember { GetProfileUseCase(repository) }
@@ -514,14 +524,14 @@ fun NavGraph(
             // sementara pakai data statis sesuai desain
             SeeProfileScreen(
                 name = "Aulia Rahma",
-                photoUrl = null, // isi url kalau sudah ada
+                photoUrl = null,
                 whatsapp = "+6281234567890",
                 email = "auliarahma@gmail.com",
                 domicile = "Jakarta Selatan",
                 education = "Sarjana (S1) - Informatika",
                 cvFileName = "CV.pdf",
                 portfolioUrl = "https://bit.ly/Portofolio",
-                onEditField = { /* TODO: buka dialog edit per field */ },
+                onEditField = { /* TODO */ },
                 onDeletePortfolio = { /* TODO */ },
                 onSave = { navController.popBackStack() }
             )

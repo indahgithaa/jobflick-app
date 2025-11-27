@@ -18,16 +18,13 @@ import com.example.jobflick.core.ui.theme.BluePrimary
 import com.example.jobflick.core.ui.theme.GrayInactive
 import com.example.jobflick.core.ui.theme.OrangePrimary
 import com.example.jobflick.features.jobseeker.roadmap.domain.model.RoadmapModule
-
-enum class RoadmapModuleStatus {
-    COMPLETED, IN_PROGRESS, LOCKED
-}
+import com.example.jobflick.features.jobseeker.roadmap.domain.model.RoadmapModuleStatus
 
 @Composable
 fun RoadmapModuleCard(
     index: Int,
     module: RoadmapModule,
-    status: RoadmapModuleStatus,
+    status: com.example.jobflick.features.jobseeker.roadmap.domain.model.RoadmapModuleStatus,
     onClick: () -> Unit
 ) {
     val isClickable = status != RoadmapModuleStatus.LOCKED

@@ -24,7 +24,7 @@ fun ModuleDetailScreen(
     role: RoadmapRole,
     module: RoadmapModule,
     onBack: () -> Unit,
-    onOpenArticle: (String) -> Unit,
+    onOpenArticle: (Int) -> Unit,
     onOpenQuiz: () -> Unit
 ) {
     Scaffold(
@@ -72,6 +72,7 @@ fun ModuleDetailScreen(
             }
 
             Spacer(Modifier.height(24.dp))
+
             SectionTitle("Deskripsi")
             Text(
                 text = module.description,
@@ -79,6 +80,7 @@ fun ModuleDetailScreen(
             )
 
             Spacer(Modifier.height(20.dp))
+
             SectionTitle("Yang akan Dipelajari")
             Spacer(Modifier.height(8.dp))
             module.learningPoints.forEach {
@@ -86,16 +88,19 @@ fun ModuleDetailScreen(
             }
 
             Spacer(Modifier.height(24.dp))
+
             SectionTitle("Artikel")
-            module.articles.forEach { article ->
-                Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
+            module.articles.forEachIndexed { index, article ->
                 RoadmapModuleItem(
-                    title = article,
-                    onClick = { onOpenArticle(article) }
+                    title = article.title,
+                    onClick = { onOpenArticle(index) }
                 )
+                Spacer(Modifier.height(8.dp))
             }
 
             Spacer(Modifier.height(24.dp))
+
             SectionTitle("Kuis")
             RoadmapModuleItem(
                 title = module.quizTitle,

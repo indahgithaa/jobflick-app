@@ -13,22 +13,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.jobflick.core.ui.components.JFSearchBar
 import com.example.jobflick.core.ui.theme.Jost
+import com.example.jobflick.features.roadmap.presentation.rememberRoadmapViewModel
 
 @Composable
 fun RoadmapScreen(
     onRoleSelected: (String) -> Unit
 ) {
-    val availableRoles = remember {
-        listOf(
-            "Senior Software Engineer",
-            "Frontend Developer",
-            "Machine Learning Engineer"
-        )
-    }
+    val viewModel = rememberRoadmapViewModel()
+    val availableRoles = viewModel.availableRoles
 
     RoadmapRoleListScreen(
         availableRoles = availableRoles,
-        onSelectRole = onRoleSelected
+        onSelectRole = { roleName ->
+            viewModel.selectRole(roleName)
+            onRoleSelected(roleName)
+        }
     )
 }
 
