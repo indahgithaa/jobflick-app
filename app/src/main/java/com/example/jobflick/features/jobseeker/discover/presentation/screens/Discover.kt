@@ -16,12 +16,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.jobflick.R
-import com.example.jobflick.features.discover.presentation.components.DiscoverActionButtons
-import com.example.jobflick.features.discover.presentation.components.SwipeableCard
+import com.example.jobflick.features.jobseeker.discover.presentation.components.DiscoverActionButtons
+import com.example.jobflick.features.jobseeker.discover.presentation.components.SwipeableCard
 import com.example.jobflick.core.ui.theme.GreenApply
 import com.example.jobflick.core.ui.theme.RedSkip
 import com.example.jobflick.core.ui.theme.YellowUndo
-import com.example.jobflick.features.discover.domain.JobPosting
+import com.example.jobflick.features.jobseeker.discover.domain.JobPosting
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
