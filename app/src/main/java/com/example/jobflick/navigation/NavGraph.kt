@@ -18,7 +18,11 @@ import androidx.navigation.navArgument
 import com.example.jobflick.features.auth.presentation.JobSeekerDoneRegistScreen
 import com.example.jobflick.features.auth.presentation.SignInRoute
 import com.example.jobflick.features.auth.presentation.SignUpRoute
+
+// ====== JOBSEEKER DISCOVER ======
 import com.example.jobflick.features.jobseeker.discover.presentation.screens.DiscoverScreen
+
+// ====== JOBSEEKER PROFILE ======
 import com.example.jobflick.features.jobseeker.profile.data.datasource.ProfileRemoteDataSource
 import com.example.jobflick.features.jobseeker.profile.data.repository.ProfileRepositoryImpl
 import com.example.jobflick.features.jobseeker.profile.domain.model.Job
@@ -30,6 +34,8 @@ import com.example.jobflick.features.jobseeker.profile.presentation.screens.Prof
 import com.example.jobflick.features.jobseeker.profile.presentation.screens.ProfileSettingsScreen
 import com.example.jobflick.features.jobseeker.profile.presentation.screens.SeeProfileScreen
 import com.example.jobflick.features.jobseeker.profile.presentation.viewmodel.ProfileViewModel
+
+// ====== JOBSEEKER ROADMAP ======
 import com.example.jobflick.features.jobseeker.roadmap.data.datasource.RoadmapRemoteDataSource
 import com.example.jobflick.features.jobseeker.roadmap.data.repository.RoadmapRepositoryImpl
 import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.ArticleDetailScreen
@@ -38,9 +44,23 @@ import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.Quiz
 import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.QuizScreen
 import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.RoadmapOverviewScreen
 import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.RoadmapScreen
+
+// ====== ONBOARDING ======
 import com.example.jobflick.features.onboarding.presentation.OnboardingScreen
 import com.example.jobflick.features.onboarding.presentation.RoleSelectionScreen
 import com.example.jobflick.features.onboarding.presentation.SplashScreen
+
+// ====== RECRUITER AUTH SCREENS ======
+import com.example.jobflick.features.recruiter.auth.presentation.screens.RecruiterCompanyProfileScreen
+import com.example.jobflick.features.recruiter.auth.presentation.screens.RecruiterDoneScreen
+import com.example.jobflick.features.recruiter.auth.presentation.screens.RecruiterProfileInfoScreen
+import com.example.jobflick.features.recruiter.auth.presentation.screens.RecruiterSignInScreen
+import com.example.jobflick.features.recruiter.auth.presentation.screens.RecruiterSignUpRoute
+
+// ====== RECRUITER MAIN TABS SCREENS ======
+import com.example.jobflick.features.recruiter.dashboard.presentation.screens.RecruiterDashboardScreen
+import com.example.jobflick.features.recruiter.discover.presentation.screens.RecruiterDiscoverScreen
+import com.example.jobflick.features.recruiter.profile.presentation.screens.RecruiterProfileScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -49,9 +69,6 @@ fun NavGraph(
     startDestination: String = Routes.SPLASH,
     modifier: Modifier = Modifier
 ) {
-    // =====================================================================
-    // Manual DI level navigation (dipakai semua screen roadmap)
-    // =====================================================================
     val roadmapRemote = remember { RoadmapRemoteDataSource() }
     val roadmapRepository = remember { RoadmapRepositoryImpl(roadmapRemote) }
 
@@ -92,27 +109,43 @@ fun NavGraph(
             )
         }
 
-        // ========== AUTH ==========
+        // ========== AUTH: SIGNUP ==========
         composable(
             route = Routes.SIGNUP,
             arguments = listOf(navArgument("role") { type = NavType.StringType })
         ) { backStackEntry ->
             val role = backStackEntry.arguments?.getString("role") ?: "jobseeker"
 
-            SignUpRoute(
-                role = role,
-                onSignedUp = {
-                    navController.navigate(Routes.completeProfile(role)) {
-                        popUpTo(Routes.signup(role)) { inclusive = true }
-                        launchSingleTop = true
+            if (role == "recruiter") {
+                RecruiterSignUpRoute(
+                    onSignedUp = {
+                        navController.navigate(Routes.RECRUITER_COMPANY_PROFILE) {
+                            popUpTo(Routes.signup(role)) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onClickSignIn = {
+                        navController.navigate(Routes.signin("recruiter")) { launchSingleTop = true }
                     }
-                },
-                onClickSignIn = {
-                    navController.navigate(Routes.signin(role)) { launchSingleTop = true }
-                }
-            )
+                )
+            } else {
+                // ==== SIGN UP JOBSEEKER ====
+                SignUpRoute(
+                    role = role,
+                    onSignedUp = {
+                        navController.navigate(Routes.completeProfile(role)) {
+                            popUpTo(Routes.signup(role)) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onClickSignIn = {
+                        navController.navigate(Routes.signin(role)) { launchSingleTop = true }
+                    }
+                )
+            }
         }
 
+        // ========== AUTH: COMPLETE PROFILE JOBSEEKER ==========
         composable(
             route = Routes.COMPLETE_PROFILE,
             arguments = listOf(navArgument("role") { type = NavType.StringType })
@@ -132,48 +165,109 @@ fun NavGraph(
             )
         }
 
+        // ========== AUTH: RECRUITER COMPANY PROFILE ==========
+        composable(Routes.RECRUITER_COMPANY_PROFILE) {
+            RecruiterCompanyProfileScreen(
+                onPickCompanyLogo = { /* TODO: open picker */ },
+                onSubmit = { _, _, _, _, _, _, _ ->
+                    navController.navigate(Routes.RECRUITER_PROFILE_INFO)
+                }
+            )
+        }
+
+        // ========== AUTH: RECRUITER PROFILE INFO ==========
+        composable(Routes.RECRUITER_PROFILE_INFO) {
+            RecruiterProfileInfoScreen(
+                onPickPhoto = { /* TODO: open picker */ },
+                onSubmit = { _, _, _, _, _ ->
+                    navController.navigate(Routes.done("recruiter")) {
+                        popUpTo(Routes.RECRUITER_PROFILE_INFO) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        // ========== AUTH: SIGNIN ==========
         composable(
             route = Routes.SIGNIN,
             arguments = listOf(navArgument("role") { type = NavType.StringType })
         ) { backStackEntry ->
             val role = backStackEntry.arguments?.getString("role") ?: "jobseeker"
 
-            SignInRoute(
-                onSignedIn = {
-                    navController.navigate(Routes.DISCOVER) {
-                        popUpTo(Routes.SPLASH) { inclusive = true }
-                        launchSingleTop = true
+            if (role == "recruiter") {
+                RecruiterSignInScreen(
+                    onSubmit = { email, password ->
+                        // TODO: hubungkan dengan AuthViewModel recruiter kalau sudah ada
+                        // sementara langsung arahkan ke dashboard
+                        navController.navigate(Routes.RECRUITER_DASHBOARD) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onClickSignUp = {
+                        navController.navigate(Routes.signup("recruiter")) { launchSingleTop = true }
                     }
-                },
-                onClickSignUp = {
-                    navController.navigate(Routes.signup(role)) { launchSingleTop = true }
-                }
-            )
+                )
+            } else {
+                SignInRoute(
+                    onSignedIn = {
+                        navController.navigate(Routes.DISCOVER) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onClickSignUp = {
+                        navController.navigate(Routes.signup(role)) { launchSingleTop = true }
+                    }
+                )
+            }
         }
 
+        // ========== AUTH: DONE ==========
         composable(
             route = Routes.DONE,
             arguments = listOf(navArgument("role") { type = NavType.StringType })
-        ) {
-            JobSeekerDoneRegistScreen(
-                onStart = {
-                    navController.navigate(Routes.DISCOVER) {
-                        popUpTo(Routes.SPLASH) { inclusive = true }
-                        launchSingleTop = true
+        ) { backStackEntry ->
+            val role = backStackEntry.arguments?.getString("role") ?: "jobseeker"
+
+            if (role == "recruiter") {
+                RecruiterDoneScreen(
+                    onStart = {
+                        navController.navigate(Routes.RECRUITER_DASHBOARD) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                            launchSingleTop = true
+                        }
                     }
+                )
+            } else {
+                JobSeekerDoneRegistScreen(
+                    onStart = {
+                        navController.navigate(Routes.DISCOVER) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+        }
+
+        // ========== MAIN TAB: DISCOVER (JOBSEEKER) ==========
+        composable(Routes.DISCOVER) {
+            DiscoverScreen(
+                onApply = { _ ->
+                    // TODO: simpan ke list "Dilamar" / kirim ke BE
+                },
+                onSave = { _ ->
+                    // TODO: simpan ke list "Disimpan" / kirim ke BE
+                },
+                onOpenFilter = {
+                    // TODO: buka sheet / screen filter
                 }
             )
         }
 
-        // ========== MAIN TAB: DISCOVER ==========
-        composable(Routes.DISCOVER) {
-            DiscoverScreen(
-                onApply = { /* TODO */ },
-                onSave = { /* TODO */ }
-            )
-        }
-
-        // ========== MAIN TAB: ROADMAP ==========
+        // ========== MAIN TAB: ROADMAP (JOBSEEKER) ==========
         composable(Routes.ROADMAP) {
             RoadmapScreen(
                 onRoleSelected = { roleName ->
@@ -188,7 +282,6 @@ fun NavGraph(
         ) { backStackEntry ->
             val roleName = backStackEntry.arguments?.getString("roleName") ?: ""
 
-            // Ambil roadmap untuk role tertentu dari repository (stateful, pakai remember)
             val roadmapRole = remember(roleName) {
                 roadmapRepository.getRoadmapRole(roleName)
             }
@@ -304,7 +397,6 @@ fun NavGraph(
             val roleName = backStackEntry.arguments?.getString("roleName") ?: ""
             val moduleNumber = backStackEntry.arguments?.getInt("moduleNumber") ?: 1
 
-            // pakai repository yang tadi sudah di-remember di NavGraph
             val roadmapRole = remember(roleName) {
                 roadmapRepository.getRoadmapRole(roleName)
             }
@@ -327,11 +419,10 @@ fun NavGraph(
                             roleName = roadmapRole.name,
                             score = score
                         )
-                    ) { /* popUpTo dll */ }
+                    )
                 }
             )
         }
-
 
         composable(
             route = Routes.ROADMAP_QUIZ_DONE,
@@ -354,10 +445,9 @@ fun NavGraph(
             )
         }
 
-        // ========== MAIN TAB: PROFILE (jobs list) ==========
+        // ========== PROFILE (JOBSEEKER) ==========
         composable(Routes.PROFILE) {
 
-            // manual DI profile
             val remote = remember { ProfileRemoteDataSource() }
             val repository = remember { ProfileRepositoryImpl(remote) }
             val getProfile = remember { GetProfileUseCase(repository) }
@@ -379,18 +469,14 @@ fun NavGraph(
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    ) { CircularProgressIndicator() }
                 }
 
                 state.profile == null && state.errorMessage != null -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = state.errorMessage ?: "Terjadi kesalahan")
-                    }
+                    ) { Text(text = state.errorMessage ?: "Terjadi kesalahan") }
                 }
 
                 state.profile != null -> {
@@ -421,7 +507,6 @@ fun NavGraph(
             }
         }
 
-        // ========== PROFILE: JOB DETAIL ==========
         composable(
             route = Routes.PROFILE_JOB_DETAIL,
             arguments = listOf(navArgument("jobId") { type = NavType.StringType })
@@ -460,56 +545,32 @@ fun NavGraph(
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = error ?: "Lowongan tidak ditemukan")
-                    }
+                    ) { Text(text = error ?: "Lowongan tidak ditemukan") }
                 }
 
                 else -> {
                     JobDetailScreen(
                         job = job!!,
-                        onApplyClick = {
-                            // TODO: apply
-                        },
-                        onDeleteClick = {
-                            // TODO: delete from saved/applied jika perlu
-                            navController.popBackStack()
-                        }
+                        onApplyClick = { /* TODO */ },
+                        onDeleteClick = { navController.popBackStack() }
                     )
                 }
             }
         }
 
-        // ========== PROFILE: SETTINGS ==========
         composable(Routes.PROFILE_SETTINGS) {
             ProfileSettingsScreen(
                 onOpenProfile = {
                     navController.navigate(Routes.PROFILE_SEE_PROFILE)
                 },
-                onOpenExperience = {
-                    // TODO: screen pengalaman
-                },
-                onOpenPreference = {
-                    // TODO: screen preferensi
-                },
-                onOpenSecurity = {
-                    // TODO: screen keamanan
-                },
-                onOpenDeleteAccount = {
-                    // TODO: dialog hapus akun
-                },
-                onToggleDirectContact = { _ ->
-                    // TODO: simpan preferensi kontak langsung
-                },
-                onOpenAboutApp = {
-                    // TODO
-                },
-                onOpenReport = {
-                    // TODO
-                },
-                onOpenTerms = {
-                    // TODO
-                },
+                onOpenExperience = { /* TODO */ },
+                onOpenPreference = { /* TODO */ },
+                onOpenSecurity = { /* TODO */ },
+                onOpenDeleteAccount = { /* TODO */ },
+                onToggleDirectContact = { _ -> /* TODO */ },
+                onOpenAboutApp = { /* TODO */ },
+                onOpenReport = { /* TODO */ },
+                onOpenTerms = { /* TODO */ },
                 onLogout = {
                     navController.navigate(Routes.signin("jobseeker")) {
                         popUpTo(Routes.DISCOVER) { inclusive = true }
@@ -519,9 +580,7 @@ fun NavGraph(
             )
         }
 
-        // ========== PROFILE: SEE PROFILE ==========
         composable(Routes.PROFILE_SEE_PROFILE) {
-            // sementara pakai data statis sesuai desain
             SeeProfileScreen(
                 name = "Aulia Rahma",
                 photoUrl = null,
@@ -534,6 +593,40 @@ fun NavGraph(
                 onEditField = { /* TODO */ },
                 onDeletePortfolio = { /* TODO */ },
                 onSave = { navController.popBackStack() }
+            )
+        }
+
+        // ========== RECRUITER MAIN TABS ==========
+        composable(Routes.RECRUITER_DASHBOARD) {
+            RecruiterDashboardScreen(
+                currentRoute = Routes.RECRUITER_DASHBOARD,
+                onTabSelected = { dest ->
+                    if (dest != Routes.RECRUITER_DASHBOARD) {
+                        navController.navigate(dest) { launchSingleTop = true }
+                    }
+                }
+            )
+        }
+
+        composable(Routes.RECRUITER_DISCOVER) {
+            RecruiterDiscoverScreen(
+                currentRoute = Routes.RECRUITER_DISCOVER,
+                onTabSelected = { dest ->
+                    if (dest != Routes.RECRUITER_DISCOVER) {
+                        navController.navigate(dest) { launchSingleTop = true }
+                    }
+                }
+            )
+        }
+
+        composable(Routes.RECRUITER_PROFILE) {
+            RecruiterProfileScreen(
+                currentRoute = Routes.RECRUITER_PROFILE,
+                onTabSelected = { dest ->
+                    if (dest != Routes.RECRUITER_PROFILE) {
+                        navController.navigate(dest) { launchSingleTop = true }
+                    }
+                }
             )
         }
     }

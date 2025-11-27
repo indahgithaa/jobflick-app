@@ -6,6 +6,9 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Work
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
@@ -13,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
@@ -31,6 +35,7 @@ import kotlin.math.roundToInt
 fun SwipeableCard(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    onDrag: (x: Float, y: Float) -> Unit = { _, _ -> },
     onSwipedLeft: () -> Unit = {},
     onSwipedRight: () -> Unit = {},
     onSwipedUp: () -> Unit = {},
@@ -53,23 +58,46 @@ fun SwipeableCard(
                         detectDragGestures(
                             onDragEnd = {
                                 when {
-                                    x.value > thresholdX  -> onSwipedRight()
-                                    x.value < -thresholdX -> onSwipedLeft()
-                                    y.value < -thresholdY -> onSwipedUp()
+                                    x.value > thresholdX  -> {
+                                        onSwipedRight()
+                                    }
+                                    x.value < -thresholdX -> {
+                                        onSwipedLeft()
+                                    }
+                                    y.value < -thresholdY -> {
+                                        onSwipedUp()
+                                    }
                                     else -> {
-                                        scope.launch { x.animateTo(0f, spring(stiffness = Spring.StiffnessMedium)) }
-                                        scope.launch { y.animateTo(0f, spring(stiffness = Spring.StiffnessMedium)) }
-                                        scope.launch { rot.animateTo(0f, spring(stiffness = Spring.StiffnessMedium)) }
+                                        scope.launch {
+                                            x.animateTo(
+                                                targetValue = 0f,
+                                                animationSpec = spring(stiffness = Spring.StiffnessMedium)
+                                            )
+                                        }
+                                        scope.launch {
+                                            y.animateTo(
+                                                targetValue = 0f,
+                                                animationSpec = spring(stiffness = Spring.StiffnessMedium)
+                                            )
+                                        }
+                                        scope.launch {
+                                            rot.animateTo(
+                                                targetValue = 0f,
+                                                animationSpec = spring(stiffness = Spring.StiffnessMedium)
+                                            )
+                                        }
+                                        onDrag(0f, 0f)
                                     }
                                 }
                             }
                         ) { change, drag ->
-                            change.consume()
+                            change.consumeAllChanges()
                             val (dx, dy) = drag
                             scope.launch {
                                 x.snapTo(x.value + dx)
                                 y.snapTo(y.value + dy)
                                 rot.snapTo((x.value / 20f).coerceIn(-20f, 20f))
+                                onDrag(x.value, y.value)
                             }
                         }
                     }
@@ -77,8 +105,8 @@ fun SwipeableCard(
             )
             .rotate(rot.value)
             .offset { IntOffset(x.value.roundToInt(), y.value.roundToInt()) },
-        shape = RoundedCornerShape(18.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
     ) {
         content()
     }

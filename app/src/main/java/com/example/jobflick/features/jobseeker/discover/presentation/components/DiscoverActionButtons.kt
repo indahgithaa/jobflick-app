@@ -1,5 +1,6 @@
 package com.example.jobflick.features.jobseeker.discover.presentation.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -20,8 +21,8 @@ fun DiscoverActionButtons(
     modifier: Modifier = Modifier,
     onUndo: () -> Unit,
     onSkip: () -> Unit,
-    onApply: () -> Unit,
-    onSave: () -> Unit
+    onApplyClick: () -> Unit,
+    onSaveClick: () -> Unit
 ) {
     Row(
         modifier = modifier
@@ -32,8 +33,8 @@ fun DiscoverActionButtons(
     ) {
         ActionButton("Batal", YellowUndo, R.drawable.undo, onUndo)
         ActionButton("Lewati", RedSkip, R.drawable.close, onSkip)
-        ActionButton("Lamar", GreenApply, R.drawable.check, onApply)
-        ActionButton("Simpan", BlueSave, R.drawable.bookmark, onSave)
+        ActionButton("Lamar", GreenApply, R.drawable.check, onApplyClick)
+        ActionButton("Simpan", BlueSave, R.drawable.bookmark, onSaveClick)
     }
 }
 
@@ -48,20 +49,29 @@ private fun ActionButton(
         Surface(
             onClick = onClick,
             shape = CircleShape,
-            tonalElevation = 2.dp,
-            color = tint.copy(alpha = 0.12f),
+            color = Color.White,
+            border = BorderStroke(2.dp, tint),
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
             modifier = Modifier.size(56.dp)
         ) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
                 Icon(
                     painter = painterResource(iconRes),
                     contentDescription = label,
                     tint = tint,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(26.dp)
                 )
             }
         }
         Spacer(Modifier.height(6.dp))
-        Text(label, style = MaterialTheme.typography.bodySmall)
+        Text(
+            label,
+            style = MaterialTheme.typography.bodySmall,
+            color = tint
+        )
     }
 }

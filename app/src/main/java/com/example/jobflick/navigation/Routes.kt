@@ -5,11 +5,11 @@ object Routes {
     const val ONBOARDING = "onboarding"
     const val SELECTROLE = "select_role"
 
-    // AUTH
+    // AUTH GENERIC
     const val SIGNUP = "signup/{role}"
     fun signup(role: String) = "signup/$role"
 
-    const val COMPLETE_PROFILE = "completeProfile/{role}"
+    const val COMPLETE_PROFILE = "completeProfile/{role}" // dipakai untuk JOBSEEKER
     fun completeProfile(role: String) = "completeProfile/$role"
 
     const val SIGNIN = "signin/{role}"
@@ -18,7 +18,7 @@ object Routes {
     const val DONE = "done/{role}"
     fun done(role: String) = "done/$role"
 
-    // MAIN TABS
+    // MAIN TABS (JOBSEEKER)
     const val DISCOVER = "discover"
     const val ROADMAP = "roadmap"
     const val MESSAGE = "message"
@@ -52,4 +52,13 @@ object Routes {
     const val ROADMAP_QUIZ_DONE = "roadmapQuizDone/{roleName}/{score}"
     fun roadmapQuizDone(roleName: String, score: Int) =
         "roadmapQuizDone/$roleName/$score"
+
+    // RECRUITER AUTH LANJUTAN
+    const val RECRUITER_COMPANY_PROFILE = "recruiterCompanyProfile"
+    const val RECRUITER_PROFILE_INFO = "recruiterProfileInfo"
+
+    // RECRUITER MAIN TABS
+    const val RECRUITER_DASHBOARD = "recruiterDashboard"
+    const val RECRUITER_DISCOVER = "recruiterDiscover"
+    const val RECRUITER_PROFILE = "recruiterProfile"
 }

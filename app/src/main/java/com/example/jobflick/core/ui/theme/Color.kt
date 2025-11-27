@@ -13,3 +13,6 @@ val BlueSave    = Color(0xFF4285F4)
 
 // Bottom nav
 val GrayInactive = Color(0xFFA0A0A0)
+
+// Text
+val GrayText = GrayInactive
