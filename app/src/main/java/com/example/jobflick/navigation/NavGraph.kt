@@ -19,7 +19,6 @@ import com.example.jobflick.features.auth.presentation.JobSeekerDoneRegistScreen
 import com.example.jobflick.features.auth.presentation.SignInRoute
 import com.example.jobflick.features.auth.presentation.SignUpRoute
 import com.example.jobflick.features.jobseeker.discover.presentation.screens.DiscoverScreen
-import com.example.jobflick.features.jobseeker.message.presentation.MessageScreen
 import com.example.jobflick.features.onboarding.presentation.OnboardingScreen
 import com.example.jobflick.features.onboarding.presentation.RoleSelectionScreen
 import com.example.jobflick.features.onboarding.presentation.SplashScreen
@@ -340,10 +339,10 @@ fun NavGraph(
             )
         }
 
-        // ========== MAIN TAB: MESSAGE ==========
-        composable(Routes.MESSAGE) {
-            MessageScreen()
-        }
+//        // ========== MAIN TAB: MESSAGE ==========
+//        composable(Routes.MESSAGE) {
+//            MessageScreen()
+//        }
 
         // ========== MAIN TAB: PROFILE (jobs list) ==========
         composable(Routes.PROFILE) {
