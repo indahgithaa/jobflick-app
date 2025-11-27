@@ -1,5 +1,8 @@
 package com.example.jobflick.navigation
 
+import CompleteProfileScreen
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -12,35 +15,35 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.jobflick.features.auth.presentation.CompleteProfileScreen
 import com.example.jobflick.features.auth.presentation.JobSeekerDoneRegistScreen
 import com.example.jobflick.features.auth.presentation.SignInRoute
 import com.example.jobflick.features.auth.presentation.SignUpRoute
-import com.example.jobflick.features.discover.presentation.screens.DiscoverScreen
-import com.example.jobflick.features.message.presentation.MessageScreen
+import com.example.jobflick.features.jobseeker.discover.presentation.screens.DiscoverScreen
+import com.example.jobflick.features.jobseeker.message.presentation.MessageScreen
 import com.example.jobflick.features.onboarding.presentation.OnboardingScreen
 import com.example.jobflick.features.onboarding.presentation.RoleSelectionScreen
 import com.example.jobflick.features.onboarding.presentation.SplashScreen
-import com.example.jobflick.features.profile.data.datasource.ProfileRemoteDataSource
-import com.example.jobflick.features.profile.data.repository.ProfileRepositoryImpl
-import com.example.jobflick.features.profile.domain.model.Job
-import com.example.jobflick.features.profile.domain.usecase.GetJobDetailUseCase
-import com.example.jobflick.features.profile.domain.usecase.GetJobsUseCase
-import com.example.jobflick.features.profile.domain.usecase.GetProfileUseCase
-import com.example.jobflick.features.profile.presentation.screens.JobDetailScreen
-import com.example.jobflick.features.profile.presentation.screens.ProfileScreen
-import com.example.jobflick.features.profile.presentation.screens.ProfileSettingsScreen
-import com.example.jobflick.features.profile.presentation.screens.SeeProfileScreen
-import com.example.jobflick.features.profile.presentation.viewmodel.ProfileViewModel
-import com.example.jobflick.features.roadmap.data.remote.RoadmapRemoteDataSource
-import com.example.jobflick.features.roadmap.data.repository.RoadmapRepositoryImpl
-import com.example.jobflick.features.roadmap.presentation.screens.ArticleDetailScreen
-import com.example.jobflick.features.roadmap.presentation.screens.ModuleDetailScreen
-import com.example.jobflick.features.roadmap.presentation.screens.QuizDoneScreen
-import com.example.jobflick.features.roadmap.presentation.screens.QuizScreen
-import com.example.jobflick.features.roadmap.presentation.screens.RoadmapOverviewScreen
-import com.example.jobflick.features.roadmap.presentation.screens.RoadmapScreen
+import com.example.jobflick.features.jobseeker.profile.data.datasource.ProfileRemoteDataSource
+import com.example.jobflick.features.jobseeker.profile.data.repository.ProfileRepositoryImpl
+import com.example.jobflick.features.jobseeker.profile.domain.model.Job
+import com.example.jobflick.features.jobseeker.profile.domain.usecases.GetJobDetailUseCase
+import com.example.jobflick.features.jobseeker.profile.domain.usecases.GetJobsUseCase
+import com.example.jobflick.features.jobseeker.profile.domain.usecases.GetProfileUseCase
+import com.example.jobflick.features.jobseeker.profile.presentation.screens.JobDetailScreen
+import com.example.jobflick.features.jobseeker.profile.presentation.screens.ProfileScreen
+import com.example.jobflick.features.jobseeker.profile.presentation.screens.ProfileSettingsScreen
+import com.example.jobflick.features.jobseeker.profile.presentation.screens.SeeProfileScreen
+import com.example.jobflick.features.jobseeker.profile.presentation.viewmodel.ProfileViewModel
+import com.example.jobflick.features.jobseeker.roadmap.data.remote.RoadmapRemoteDataSource
+import com.example.jobflick.features.jobseeker.roadmap.data.repository.RoadmapRepositoryImpl
+import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.ArticleDetailScreen
+import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.ModuleDetailScreen
+import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.QuizDoneScreen
+import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.QuizScreen
+import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.RoadmapOverviewScreen
+import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.RoadmapScreen
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavGraph(
     navController: NavHostController,
