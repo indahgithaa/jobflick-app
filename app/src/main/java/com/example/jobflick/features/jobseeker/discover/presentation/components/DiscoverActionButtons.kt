@@ -3,7 +3,10 @@ package com.example.jobflick.features.jobseeker.discover.presentation.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,29 +52,20 @@ private fun ActionButton(
         Surface(
             onClick = onClick,
             shape = CircleShape,
-            color = Color.White,
+            color = Color.Transparent,
             border = BorderStroke(2.dp, tint),
-            tonalElevation = 0.dp,
-            shadowElevation = 0.dp,
             modifier = Modifier.size(56.dp)
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 Icon(
-                    painter = painterResource(iconRes),
+                    painter = painterResource(id = iconRes),
                     contentDescription = label,
                     tint = tint,
-                    modifier = Modifier.size(26.dp)
+                    modifier = Modifier.size(28.dp)
                 )
             }
         }
         Spacer(Modifier.height(6.dp))
-        Text(
-            label,
-            style = MaterialTheme.typography.bodySmall,
-            color = tint
-        )
+        Text(label, style = MaterialTheme.typography.bodySmall)
     }
 }

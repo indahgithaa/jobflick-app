@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.jobflick.R
 import com.example.jobflick.core.common.toTimeAgoLabel
+import com.example.jobflick.core.ui.theme.BluePrimary
 import com.example.jobflick.core.ui.theme.GrayInactive
 import com.example.jobflick.core.ui.theme.GreenApply
 import com.example.jobflick.core.ui.theme.RedSkip
@@ -42,6 +43,7 @@ import kotlin.math.min
 fun DiscoverScreen(
     onApply: (JobPosting) -> Unit,
     onSave: (JobPosting) -> Unit,
+    onOpenDetail: (JobPosting) -> Unit,
     onOpenFilter: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -50,7 +52,7 @@ fun DiscoverScreen(
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // untuk status chip
+    // status chip
     var statusMessage by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(statusMessage) {
         if (statusMessage != null) {
@@ -59,12 +61,12 @@ fun DiscoverScreen(
         }
     }
 
-    // progress swipe (kartu teratas), -1..1
+    // progress swipe kartu teratas
     val density = LocalDensity.current
     val thresholdX = with(density) { 120.dp.toPx() }
     var swipeProgress by remember { mutableStateOf(0f) }
 
-    // load dummy dari remote data source (yang sudah kamu tulis)
+    // load dummy
     LaunchedEffect(Unit) {
         val remote = DiscoverRemoteDataSource()
         try {
@@ -102,28 +104,25 @@ fun DiscoverScreen(
 
             when {
                 isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) { CircularProgressIndicator() }
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
                 }
 
                 errorMessage != null -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) { Text(errorMessage ?: "Terjadi kesalahan") }
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(errorMessage ?: "Terjadi kesalahan")
+                    }
                 }
 
                 stack.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) { Text("Tidak ada rekomendasi pekerjaan.") }
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Tidak ada rekomendasi pekerjaan.")
+                    }
                 }
 
                 else -> {
-                    // ========== STACK KARTU ==========
+                    // ====== STACK KARTU ======
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -135,7 +134,6 @@ fun DiscoverScreen(
                             val topIndex = cards.lastIndex
                             val isTop = index == topIndex
 
-                            // tumpukan lebih kecil
                             val layerFromTop = topIndex - index
                             val scale = when (layerFromTop) {
                                 0 -> 1f
@@ -152,8 +150,7 @@ fun DiscoverScreen(
                                 enabled = isTop,
                                 onDrag = { x, _ ->
                                     if (isTop) {
-                                        swipeProgress = (x / thresholdX)
-                                            .coerceIn(-1f, 1f)
+                                        swipeProgress = (x / thresholdX).coerceIn(-1f, 1f)
                                     }
                                 },
                                 onSwipedLeft = {
@@ -170,7 +167,6 @@ fun DiscoverScreen(
                                     stack = stack.drop(1)
                                 },
                                 onSwipedUp = {
-                                    // Simpan tapi kartu tidak hilang
                                     swipeProgress = 0f
                                     statusMessage = "Lowongan disimpan"
                                     onSave(job)
@@ -187,13 +183,14 @@ fun DiscoverScreen(
                             ) {
                                 JobCardContent(
                                     job = job,
-                                    swipeProgress = if (isTop) swipeProgress else 0f
+                                    swipeProgress = if (isTop) swipeProgress else 0f,
+                                    onOpenDetail = { onOpenDetail(job) }
                                 )
                             }
                         }
                     }
 
-                    // ========== STATUS CHIP ==========
+                    // ===== STATUS CHIP =====
                     if (statusMessage != null) {
                         DiscoverStatusChip(
                             text = statusMessage!!,
@@ -203,7 +200,7 @@ fun DiscoverScreen(
                         )
                     }
 
-                    // ========== BUTTON BAWAH ==========
+                    // ===== BUTTON BAWAH =====
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -250,11 +247,13 @@ fun DiscoverScreen(
         }
     }
 }
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun JobCardContent(
     job: JobPosting,
-    swipeProgress: Float
+    swipeProgress: Float,
+    onOpenDetail: () -> Unit
 ) {
     val subtitleColor = GrayInactive
 
@@ -274,7 +273,6 @@ private fun JobCardContent(
             .clip(RoundedCornerShape(28.dp))
             .background(Color.White)
     ) {
-        // Konten utama
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -316,8 +314,7 @@ private fun JobCardContent(
             // TITLE
             Text(
                 text = job.title,
-                modifier = Modifier
-                    .padding(horizontal = 20.dp),
+                modifier = Modifier.padding(horizontal = 20.dp),
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold
                 )
@@ -325,7 +322,7 @@ private fun JobCardContent(
 
             Spacer(Modifier.height(4.dp))
 
-            // DIPOSTING X MENIT LALU
+            // DIPOSTING
             Text(
                 text = "Diposting ${job.postedAt.toTimeAgoLabel()}",
                 modifier = Modifier.padding(horizontal = 20.dp),
@@ -335,7 +332,6 @@ private fun JobCardContent(
 
             Spacer(Modifier.height(12.dp))
 
-            // META: jenis kerja, skill, level, gaji
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                 MetaRow(
                     label = "Jenis kerja",
@@ -379,7 +375,7 @@ private fun JobCardContent(
             )
         }
 
-        // TINT MERAH / HIJAU SAAT SWIPE
+        // TINT MERAH / HIJAU
         if (tintColor != null && tintAlpha > 0f) {
             Box(
                 modifier = Modifier
@@ -388,7 +384,7 @@ private fun JobCardContent(
             )
         }
 
-        // AREA BLUR GRADIENT KE BAWAH (fake blur pakai gradient putih)
+        // GRADIENT BAWAH
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -406,13 +402,20 @@ private fun JobCardContent(
 
         // BUTTON LIHAT DETAIL
         FilledTonalButton(
-            onClick = { /* TODO: buka detail */ },
+            onClick = onOpenDetail,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(24.dp)
+            shape = RoundedCornerShape(24.dp),
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = Color(0xFFC6D5EC),
+                contentColor = BluePrimary
+            )
         ) {
-            Text("Lihat detail")
+            Text(
+                text = "Lihat detail",
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
@@ -444,9 +447,7 @@ private fun MetaRow(
     }
 }
 
-/**
- * "Node.js, 3+ more" dari list skill.
- */
+/** "Node.js, 3+ more" */
 private fun List<String>.toSkillSummary(): String {
     if (isEmpty()) return "-"
     if (size == 1) return first()
@@ -464,8 +465,7 @@ private fun DiscoverStatusChip(
         modifier = modifier,
         color = Color.Black.copy(alpha = 0.8f),
         shape = RoundedCornerShape(50),
-        shadowElevation = 4.dp,
-        tonalElevation = 0.dp
+        shadowElevation = 4.dp
     ) {
         Text(
             text = text,

@@ -15,12 +15,18 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+
+// ====== AUTH JOBSEEKER ======
 import com.example.jobflick.features.auth.presentation.JobSeekerDoneRegistScreen
 import com.example.jobflick.features.auth.presentation.SignInRoute
 import com.example.jobflick.features.auth.presentation.SignUpRoute
 
 // ====== JOBSEEKER DISCOVER ======
+import com.example.jobflick.features.jobseeker.discover.data.datasource.DiscoverRemoteDataSource
+import com.example.jobflick.features.jobseeker.discover.domain.model.JobPosting
 import com.example.jobflick.features.jobseeker.discover.presentation.screens.DiscoverScreen
+import com.example.jobflick.features.jobseeker.discover.presentation.screens.DiscoverJobDetailScreen
+import com.example.jobflick.features.jobseeker.discover.presentation.screens.JobMatchScreen
 
 // ====== JOBSEEKER PROFILE ======
 import com.example.jobflick.features.jobseeker.profile.data.datasource.ProfileRemoteDataSource
@@ -129,7 +135,6 @@ fun NavGraph(
                     }
                 )
             } else {
-                // ==== SIGN UP JOBSEEKER ====
                 SignUpRoute(
                     role = role,
                     onSignedUp = {
@@ -168,7 +173,7 @@ fun NavGraph(
         // ========== AUTH: RECRUITER COMPANY PROFILE ==========
         composable(Routes.RECRUITER_COMPANY_PROFILE) {
             RecruiterCompanyProfileScreen(
-                onPickCompanyLogo = { /* TODO: open picker */ },
+                onPickCompanyLogo = { /* TODO */ },
                 onSubmit = { _, _, _, _, _, _, _ ->
                     navController.navigate(Routes.RECRUITER_PROFILE_INFO)
                 }
@@ -178,7 +183,7 @@ fun NavGraph(
         // ========== AUTH: RECRUITER PROFILE INFO ==========
         composable(Routes.RECRUITER_PROFILE_INFO) {
             RecruiterProfileInfoScreen(
-                onPickPhoto = { /* TODO: open picker */ },
+                onPickPhoto = { /* TODO */ },
                 onSubmit = { _, _, _, _, _ ->
                     navController.navigate(Routes.done("recruiter")) {
                         popUpTo(Routes.RECRUITER_PROFILE_INFO) { inclusive = true }
@@ -197,9 +202,7 @@ fun NavGraph(
 
             if (role == "recruiter") {
                 RecruiterSignInScreen(
-                    onSubmit = { email, password ->
-                        // TODO: hubungkan dengan AuthViewModel recruiter kalau sudah ada
-                        // sementara langsung arahkan ke dashboard
+                    onSubmit = { _, _ ->
                         navController.navigate(Routes.RECRUITER_DASHBOARD) {
                             popUpTo(Routes.SPLASH) { inclusive = true }
                             launchSingleTop = true
@@ -255,16 +258,117 @@ fun NavGraph(
         // ========== MAIN TAB: DISCOVER (JOBSEEKER) ==========
         composable(Routes.DISCOVER) {
             DiscoverScreen(
-                onApply = { _ ->
-                    // TODO: simpan ke list "Dilamar" / kirim ke BE
+                onApply = { job ->
+                    navController.navigate(Routes.jobMatch(job.id))
                 },
                 onSave = { _ ->
                     // TODO: simpan ke list "Disimpan" / kirim ke BE
+                },
+                onOpenDetail = { job ->
+                    navController.navigate(Routes.discoverJobDetail(job.id))
                 },
                 onOpenFilter = {
                     // TODO: buka sheet / screen filter
                 }
             )
+        }
+
+        // ========== DISCOVER: JOB DETAIL ==========
+        composable(
+            route = Routes.DISCOVER_JOB_DETAIL,
+            arguments = listOf(navArgument("jobId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val jobId = backStackEntry.arguments?.getString("jobId") ?: return@composable
+
+            val remote = remember { DiscoverRemoteDataSource() }
+            var job by remember { mutableStateOf<JobPosting?>(null) }
+            var isLoading by remember { mutableStateOf(true) }
+            var error by remember { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(jobId) {
+                try {
+                    isLoading = true
+                    error = null
+                    val jobs = remote.getDiscoverJobs()
+                    job = jobs.firstOrNull { it.id == jobId }
+                } catch (e: Exception) {
+                    error = e.message ?: "Terjadi kesalahan"
+                } finally {
+                    isLoading = false
+                }
+            }
+
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator() }
+                }
+
+                error != null || job == null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { Text(text = error ?: "Lowongan tidak ditemukan") }
+                }
+
+                else -> {
+                    DiscoverJobDetailScreen(
+                        job = job!!,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+            }
+        }
+
+        // ========== DISCOVER: JOB MATCH ==========
+        composable(
+            route = Routes.JOB_MATCH,
+            arguments = listOf(navArgument("jobId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val jobId = backStackEntry.arguments?.getString("jobId") ?: return@composable
+
+            val remote = remember { DiscoverRemoteDataSource() }
+            var job by remember { mutableStateOf<JobPosting?>(null) }
+            var isLoading by remember { mutableStateOf(true) }
+            var error by remember { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(jobId) {
+                try {
+                    isLoading = true
+                    error = null
+                    val jobs = remote.getDiscoverJobs()
+                    job = jobs.firstOrNull { it.id == jobId }
+                } catch (e: Exception) {
+                    error = e.message ?: "Terjadi kesalahan"
+                } finally {
+                    isLoading = false
+                }
+            }
+
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator() }
+                }
+
+                error != null || job == null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { Text(text = error ?: "Lowongan tidak ditemukan") }
+                }
+
+                else -> {
+                    JobMatchScreen(
+                        job = job!!,
+                        onClose = { navController.popBackStack() }
+                    )
+                }
+            }
         }
 
         // ========== MAIN TAB: ROADMAP (JOBSEEKER) ==========

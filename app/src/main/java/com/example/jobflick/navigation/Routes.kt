@@ -9,7 +9,7 @@ object Routes {
     const val SIGNUP = "signup/{role}"
     fun signup(role: String) = "signup/$role"
 
-    const val COMPLETE_PROFILE = "completeProfile/{role}" // dipakai untuk JOBSEEKER
+    const val COMPLETE_PROFILE = "completeProfile/{role}"
     fun completeProfile(role: String) = "completeProfile/$role"
 
     const val SIGNIN = "signin/{role}"
@@ -24,11 +24,17 @@ object Routes {
     const val MESSAGE = "message"
     const val PROFILE = "profile"
 
+    // DISCOVER EXTRA
+    const val DISCOVER_JOB_DETAIL = "discoverJobDetail/{jobId}"
+    fun discoverJobDetail(jobId: String) = "discoverJobDetail/$jobId"
+
+    const val JOB_MATCH = "jobMatch/{jobId}"
+    fun jobMatch(jobId: String) = "jobMatch/$jobId"
+
     // PROFILE EXTRA
     const val PROFILE_SETTINGS = "profileSettings"
     const val PROFILE_SEE_PROFILE = "profileSeeProfile"
 
-    // PROFILE JOB DETAIL
     const val PROFILE_JOB_DETAIL = "profileJobDetail/{jobId}"
     fun profileJobDetail(jobId: String) = "profileJobDetail/$jobId"
 
