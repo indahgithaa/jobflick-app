@@ -68,6 +68,10 @@ import com.example.jobflick.features.recruiter.auth.presentation.screens.Recruit
 import com.example.jobflick.features.recruiter.dashboard.presentation.RecruiterDashboardRoute
 import com.example.jobflick.features.recruiter.discover.presentation.screens.RecruiterDiscoverScreen
 import com.example.jobflick.features.recruiter.postjob.presentation.RecruiterPostJobRoute
+import com.example.jobflick.features.recruiter.profile.domain.model.Candidate
+import com.example.jobflick.features.recruiter.profile.domain.model.CandidateCategory
+import com.example.jobflick.features.recruiter.profile.domain.model.RecruiterProfile
+import com.example.jobflick.features.recruiter.profile.presentation.RecruiterProfileRoute
 import com.example.jobflick.features.recruiter.profile.presentation.screens.RecruiterProfileScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -732,33 +736,40 @@ fun NavGraph(
             )
         }
 
+        // ========== RECRUITER PROFILE ==========
         composable(Routes.RECRUITER_PROFILE) {
-            RecruiterProfileScreen(
+            RecruiterProfileRoute(
                 currentRoute = Routes.RECRUITER_PROFILE,
                 onTabSelected = { dest ->
                     if (dest != Routes.RECRUITER_PROFILE) {
                         navController.navigate(dest) { launchSingleTop = true }
                     }
+                },
+                onLogoutToSignIn = {
+                    navController.navigate(Routes.signin("recruiter")) {
+                        popUpTo(Routes.RECRUITER_DASHBOARD) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
+
 
         // ========== RECRUITER POST JOB ==========
-        composable(Routes.RECRUITER_POST_JOB) {
-            RecruiterPostJobRoute(
-                currentRoute = Routes.RECRUITER_DASHBOARD, // ikon Dashboard tetap aktif
-                onTabSelected = { dest ->
-                    if (dest != Routes.RECRUITER_DASHBOARD) {
-                        navController.navigate(dest) { launchSingleTop = true }
+            composable(Routes.RECRUITER_POST_JOB) {
+                RecruiterPostJobRoute(
+                    currentRoute = Routes.RECRUITER_DASHBOARD, // ikon Dashboard tetap aktif
+                    onTabSelected = { dest ->
+                        if (dest != Routes.RECRUITER_DASHBOARD) {
+                            navController.navigate(dest) { launchSingleTop = true }
+                        }
+                    },
+                    onBack = { navController.popBackStack() },
+                    onSubmitSuccess = {
+                        // setelah sukses, balik ke dashboard
+                        navController.popBackStack()  // pop post job
                     }
-                },
-                onBack = { navController.popBackStack() },
-                onSubmitSuccess = {
-                    // setelah sukses, balik ke dashboard
-                    navController.popBackStack()  // pop post job
-                }
-            )
+                )
+            }
         }
-
     }
-}
