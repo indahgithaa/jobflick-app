@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,10 +24,15 @@ fun ArticleDetailScreen(
     articleIndex: Int,
     onBack: () -> Unit,
     onOpenArticle: (Int) -> Unit,
-    onOpenQuiz: () -> Unit
+    onOpenQuiz: () -> Unit,
+    onArticleRead: (String) -> Unit
 ) {
     val currentArticle = module.articles.getOrNull(articleIndex)
         ?: module.articles.firstOrNull()
+
+    LaunchedEffect(currentArticle?.id) {
+        currentArticle?.id?.let { onArticleRead(it) }
+    }
 
     Scaffold(
         topBar = {

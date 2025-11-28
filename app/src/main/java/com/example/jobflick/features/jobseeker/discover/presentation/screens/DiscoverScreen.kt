@@ -25,11 +25,11 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.jobflick.R
 import com.example.jobflick.core.common.toTimeAgoLabel
+import com.example.jobflick.core.global.AppGraph
 import com.example.jobflick.core.ui.theme.BluePrimary
 import com.example.jobflick.core.ui.theme.GrayInactive
 import com.example.jobflick.core.ui.theme.GreenApply
 import com.example.jobflick.core.ui.theme.RedSkip
-import com.example.jobflick.features.jobseeker.discover.data.datasource.DiscoverRemoteDataSource
 import com.example.jobflick.features.jobseeker.discover.domain.model.JobPosting
 import com.example.jobflick.features.jobseeker.discover.presentation.components.DiscoverActionButtons
 import com.example.jobflick.features.jobseeker.discover.presentation.components.SwipeableCard
@@ -66,9 +66,9 @@ fun DiscoverScreen(
     val thresholdX = with(density) { 120.dp.toPx() }
     var swipeProgress by remember { mutableStateOf(0f) }
 
-    // load dummy
+    // load jobs
     LaunchedEffect(Unit) {
-        val remote = DiscoverRemoteDataSource()
+        val remote = AppGraph.discoverRemote
         try {
             isLoading = true
             errorMessage = null

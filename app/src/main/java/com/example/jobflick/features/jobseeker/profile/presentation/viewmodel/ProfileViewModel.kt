@@ -40,6 +40,10 @@ class ProfileViewModel(
         _uiState.update { it.copy(selectedTab = category) }
     }
 
+    fun refresh() {
+        loadProfileAndJobs()
+    }
+
     private fun loadProfileAndJobs() {
         viewModelScope.launch {
             try {

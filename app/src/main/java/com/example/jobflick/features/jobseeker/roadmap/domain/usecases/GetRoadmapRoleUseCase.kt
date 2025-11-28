@@ -6,6 +6,6 @@ import com.example.jobflick.features.jobseeker.roadmap.domain.repository.Roadmap
 class GetRoadmapRoleUseCase(
     private val repository: RoadmapRepository
 ) {
-    operator fun invoke(roleName: String): RoadmapRole =
+    suspend operator fun invoke(roleName: String): RoadmapRole =
         repository.getRoadmapRole(roleName)
 }

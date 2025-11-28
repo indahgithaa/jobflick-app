@@ -54,4 +54,4 @@ object RecordSerializer : KSerializer<Record> {
 }
 
 @Serializable
-data class AuthResponse(val token: String, val record: Record)
+data class AuthResponse(val token: String, val record: Record, val expiration: Long = 0L)

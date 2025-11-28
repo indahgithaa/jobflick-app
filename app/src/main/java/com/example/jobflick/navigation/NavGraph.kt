@@ -2,18 +2,19 @@ package com.example.jobflick.navigation
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.jobflick.core.global.AppGraph
 import com.example.jobflick.features.auth.presentation.CompleteProfileScreen
 
 // ====== AUTH JOBSEEKER ======
@@ -32,6 +33,7 @@ import com.example.jobflick.features.jobseeker.discover.presentation.screens.Job
 import com.example.jobflick.features.jobseeker.profile.data.datasource.ProfileRemoteDataSource
 import com.example.jobflick.features.jobseeker.profile.data.repository.ProfileRepositoryImpl
 import com.example.jobflick.features.jobseeker.profile.domain.model.Job
+import com.example.jobflick.features.jobseeker.profile.domain.model.JobCategory
 import com.example.jobflick.features.jobseeker.profile.domain.usecases.GetJobDetailUseCase
 import com.example.jobflick.features.jobseeker.profile.domain.usecases.GetJobsUseCase
 import com.example.jobflick.features.jobseeker.profile.domain.usecases.GetProfileUseCase
@@ -44,6 +46,7 @@ import com.example.jobflick.features.jobseeker.profile.presentation.viewmodel.Pr
 // ====== JOBSEEKER ROADMAP ======
 import com.example.jobflick.features.jobseeker.roadmap.data.datasource.RoadmapRemoteDataSource
 import com.example.jobflick.features.jobseeker.roadmap.data.repository.RoadmapRepositoryImpl
+import com.example.jobflick.features.jobseeker.roadmap.domain.model.RoadmapRole
 import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.ArticleDetailScreen
 import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.ModuleDetailScreen
 import com.example.jobflick.features.jobseeker.roadmap.presentation.screens.QuizDoneScreen
@@ -73,6 +76,8 @@ import com.example.jobflick.features.recruiter.profile.domain.model.CandidateCat
 import com.example.jobflick.features.recruiter.profile.domain.model.RecruiterProfile
 import com.example.jobflick.features.recruiter.profile.presentation.RecruiterProfileRoute
 import com.example.jobflick.features.recruiter.profile.presentation.screens.RecruiterProfileScreen
+import kotlinx.coroutines.launch
+import com.example.jobflick.core.ui.components.LogoutConfirmationDialog
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -81,7 +86,18 @@ fun NavGraph(
     startDestination: String = Routes.SPLASH,
     modifier: Modifier = Modifier
 ) {
-    val roadmapRemote = remember { RoadmapRemoteDataSource() }
+    val roadmapRemote = remember { RoadmapRemoteDataSource(
+        pb = AppGraph.pb,
+        roadmapsCollection = "roadmaps",
+        modulesCollection = "modules",
+        articlesCollection = "articles",
+        quizzesCollection = "quizzes",
+        questionsCollection = "questions",
+        optionsCollection = "options",
+        moduleProgressCollection = "moduleProgress",
+        quizProgressCollection = "quizProgress",
+        articleProgressCollection = "articleProgress"
+    ) }
     val roadmapRepository = remember { RoadmapRepositoryImpl(roadmapRemote) }
 
     NavHost(
@@ -263,12 +279,22 @@ fun NavGraph(
 
         // ========== MAIN TAB: DISCOVER (JOBSEEKER) ==========
         composable(Routes.DISCOVER) {
+            val discoverRepository = remember { AppGraph.discoverRepository }
+            val scope = rememberCoroutineScope()
+            var hasApplied by remember { mutableStateOf(false) }
+
             DiscoverScreen(
                 onApply = { job ->
+                    scope.launch {
+                        discoverRepository.postJobCategory(job.id, if (!hasApplied) JobCategory.MATCH else JobCategory.APPLIED)
+                        hasApplied = true
+                    }
                     navController.navigate(Routes.jobMatch(job.id))
                 },
-                onSave = { _ ->
-                    // TODO
+                onSave = { job ->
+                    scope.launch {
+                        discoverRepository.postJobCategory(job.id, JobCategory.SAVED)
+                    }
                 },
                 onOpenDetail = { job ->
                     navController.navigate(Routes.discoverJobDetail(job.id))
@@ -286,7 +312,7 @@ fun NavGraph(
         ) { backStackEntry ->
             val jobId = backStackEntry.arguments?.getString("jobId") ?: return@composable
 
-            val remote = remember { DiscoverRemoteDataSource() }
+            val remote = remember { AppGraph.discoverRemote }
             var job by remember { mutableStateOf<JobPosting?>(null) }
             var isLoading by remember { mutableStateOf(true) }
             var error by remember { mutableStateOf<String?>(null) }
@@ -335,7 +361,7 @@ fun NavGraph(
         ) { backStackEntry ->
             val jobId = backStackEntry.arguments?.getString("jobId") ?: return@composable
 
-            val remote = remember { DiscoverRemoteDataSource() }
+            val remote = remember { AppGraph.discoverRemote }
             var job by remember { mutableStateOf<JobPosting?>(null) }
             var isLoading by remember { mutableStateOf(true) }
             var error by remember { mutableStateOf<String?>(null) }
@@ -392,22 +418,52 @@ fun NavGraph(
         ) { backStackEntry ->
             val roleName = backStackEntry.arguments?.getString("roleName") ?: ""
 
-            val roadmapRole = remember(roleName) {
-                roadmapRepository.getRoadmapRole(roleName)
+            var roadmapRole by remember { mutableStateOf<RoadmapRole?>(null) }
+            var isLoading by remember { mutableStateOf(true) }
+            var error by remember { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(roleName) {
+                try {
+                    isLoading = true
+                    error = null
+                    roadmapRole = roadmapRepository.getRoadmapRole(roleName)
+                } catch (e: Exception) {
+                    error = e.message ?: "Terjadi kesalahan"
+                } finally {
+                    isLoading = false
+                }
             }
 
-            RoadmapOverviewScreen(
-                role = roadmapRole,
-                onBack = { navController.popBackStack() },
-                onSelectModule = { module ->
-                    navController.navigate(
-                        Routes.roadmapModuleDetail(
-                            roleName = roadmapRole.name,
-                            moduleNumber = module.number
-                        )
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator() }
+                }
+
+                error != null || roadmapRole == null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { Text(text = error ?: "Roadmap tidak ditemukan") }
+                }
+
+                else -> {
+                    RoadmapOverviewScreen(
+                        role = roadmapRole!!,
+                        onBack = { navController.popBackStack() },
+                        onSelectModule = { module ->
+                            navController.navigate(
+                                Routes.roadmapModuleDetail(
+                                    roleName = roadmapRole!!.name,
+                                    moduleNumber = module.number
+                                )
+                            )
+                        }
                     )
                 }
-            )
+            }
         }
 
         composable(
@@ -420,35 +476,64 @@ fun NavGraph(
             val roleName = backStackEntry.arguments?.getString("roleName") ?: ""
             val moduleNumber = backStackEntry.arguments?.getInt("moduleNumber") ?: 1
 
-            val roadmapRole = remember(roleName) {
-                roadmapRepository.getRoadmapRole(roleName)
-            }
-            val module = remember(roadmapRole, moduleNumber) {
-                roadmapRole.modules.first { it.number == moduleNumber }
+            var roadmapRole by remember { mutableStateOf<RoadmapRole?>(null) }
+            var isLoading by remember { mutableStateOf(true) }
+            var error by remember { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(roleName) {
+                try {
+                    isLoading = true
+                    error = null
+                    roadmapRole = roadmapRepository.getRoadmapRole(roleName)
+                } catch (e: Exception) {
+                    error = e.message ?: "Terjadi kesalahan"
+                } finally {
+                    isLoading = false
+                }
             }
 
-            ModuleDetailScreen(
-                role = roadmapRole,
-                module = module,
-                onBack = { navController.popBackStack() },
-                onOpenArticle = { articleIndex ->
-                    navController.navigate(
-                        Routes.roadmapArticleDetail(
-                            roleName = roadmapRole.name,
-                            moduleNumber = module.number,
-                            articleIndex = articleIndex
-                        )
-                    )
-                },
-                onOpenQuiz = {
-                    navController.navigate(
-                        Routes.roadmapQuiz(
-                            roleName = roadmapRole.name,
-                            moduleNumber = module.number
-                        )
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator() }
+                }
+
+                error != null || roadmapRole == null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { Text(text = error ?: "Roadmap tidak ditemukan") }
+                }
+
+                else -> {
+                    val module = roadmapRole!!.modules.first { it.number == moduleNumber }
+
+                    ModuleDetailScreen(
+                        role = roadmapRole!!,
+                        module = module,
+                        onBack = { navController.popBackStack() },
+                        onOpenArticle = { articleIndex ->
+                            navController.navigate(
+                                Routes.roadmapArticleDetail(
+                                    roleName = roadmapRole!!.name,
+                                    moduleNumber = module.number,
+                                    articleIndex = articleIndex
+                                )
+                            )
+                        },
+                        onOpenQuiz = {
+                            navController.navigate(
+                                Routes.roadmapQuiz(
+                                    roleName = roadmapRole!!.name,
+                                    moduleNumber = module.number
+                                )
+                            )
+                        }
                     )
                 }
-            )
+            }
         }
 
         composable(
@@ -463,38 +548,73 @@ fun NavGraph(
             val moduleNumber = backStackEntry.arguments?.getInt("moduleNumber") ?: 1
             val articleIndex = backStackEntry.arguments?.getInt("articleIndex") ?: 0
 
-            val roadmapRole = remember(roleName) {
-                roadmapRepository.getRoadmapRole(roleName)
-            }
-            val module = remember(roadmapRole, moduleNumber) {
-                roadmapRole.modules.first { it.number == moduleNumber }
-            }
-            val article = module.articles.getOrNull(articleIndex)
+            var roadmapRole by remember { mutableStateOf<RoadmapRole?>(null) }
+            var isLoading by remember { mutableStateOf(true) }
+            var error by remember { mutableStateOf<String?>(null) }
 
-            ArticleDetailScreen(
-                role = roadmapRole,
-                module = module,
-                articleTitle = article?.title ?: "",
-                articleIndex = articleIndex,
-                onBack = { navController.popBackStack() },
-                onOpenArticle = { nextIndex ->
-                    navController.navigate(
-                        Routes.roadmapArticleDetail(
-                            roleName = roadmapRole.name,
-                            moduleNumber = module.number,
-                            articleIndex = nextIndex
-                        )
-                    )
-                },
-                onOpenQuiz = {
-                    navController.navigate(
-                        Routes.roadmapQuiz(
-                            roleName = roadmapRole.name,
-                            moduleNumber = module.number
-                        )
+            LaunchedEffect(roleName) {
+                try {
+                    isLoading = true
+                    error = null
+                    roadmapRole = roadmapRepository.getRoadmapRole(roleName)
+                } catch (e: Exception) {
+                    error = e.message ?: "Terjadi kesalahan"
+                } finally {
+                    isLoading = false
+                }
+            }
+
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator() }
+                }
+
+                error != null || roadmapRole == null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { Text(text = error ?: "Roadmap tidak ditemukan") }
+                }
+
+                else -> {
+                    val module = roadmapRole!!.modules.first { it.number == moduleNumber }
+                    val article = module.articles.getOrNull(articleIndex)
+                    val scope = rememberCoroutineScope()
+
+                    ArticleDetailScreen(
+                        role = roadmapRole!!,
+                        module = module,
+                        articleTitle = article?.title ?: "",
+                        articleIndex = articleIndex,
+                        onBack = { navController.popBackStack() },
+                        onOpenArticle = { nextIndex ->
+                            navController.navigate(
+                                Routes.roadmapArticleDetail(
+                                    roleName = roadmapRole!!.name,
+                                    moduleNumber = module.number,
+                                    articleIndex = nextIndex
+                                )
+                            )
+                        },
+                        onOpenQuiz = {
+                            navController.navigate(
+                                Routes.roadmapQuiz(
+                                    roleName = roadmapRole!!.name,
+                                    moduleNumber = module.number
+                                )
+                            )
+                        },
+                        onArticleRead = { articleId ->
+                            scope.launch {
+                                roadmapRepository.markArticleAsRead(articleId)
+                            }
+                        }
                     )
                 }
-            )
+            }
         }
 
         composable(
@@ -507,31 +627,63 @@ fun NavGraph(
             val roleName = backStackEntry.arguments?.getString("roleName") ?: ""
             val moduleNumber = backStackEntry.arguments?.getInt("moduleNumber") ?: 1
 
-            val roadmapRole = remember(roleName) {
-                roadmapRepository.getRoadmapRole(roleName)
-            }
-            val module = remember(roadmapRole, moduleNumber) {
-                roadmapRole.modules.first { it.number == moduleNumber }
+            var roadmapRole by remember { mutableStateOf<RoadmapRole?>(null) }
+            var isLoading by remember { mutableStateOf(true) }
+            var error by remember { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(roleName) {
+                try {
+                    isLoading = true
+                    error = null
+                    roadmapRole = roadmapRepository.getRoadmapRole(roleName)
+                } catch (e: Exception) {
+                    error = e.message ?: "Terjadi kesalahan"
+                } finally {
+                    isLoading = false
+                }
             }
 
-            QuizScreen(
-                module = module,
-                onBack = { navController.popBackStack() },
-                onQuizFinished = { answers: List<Int> ->
-                    val score = roadmapRepository.calculateQuizScore(
-                        roleName = roadmapRole.name,
-                        moduleId = module.id,
-                        answers = answers
-                    )
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator() }
+                }
 
-                    navController.navigate(
-                        Routes.roadmapQuizDone(
-                            roleName = roadmapRole.name,
-                            score = score
-                        )
+                error != null || roadmapRole == null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { Text(text = error ?: "Roadmap tidak ditemukan") }
+                }
+
+                else -> {
+                    val module = roadmapRole!!.modules.first { it.number == moduleNumber }
+                    val scope = rememberCoroutineScope()
+
+                    QuizScreen(
+                        module = module,
+                        onBack = { navController.popBackStack() },
+                        onQuizFinished = { answers: List<Int> ->
+                            scope.launch {
+                                val score = roadmapRepository.calculateQuizScore(
+                                    roleName = roadmapRole!!.name,
+                                    moduleId = module.id,
+                                    answers = answers
+                                )
+
+                                navController.navigate(
+                                    Routes.roadmapQuizDone(
+                                        roleName = roadmapRole!!.name,
+                                        score = score
+                                    )
+                                )
+                            }
+                        }
                     )
                 }
-            )
+            }
         }
 
         composable(
@@ -557,8 +709,9 @@ fun NavGraph(
 
         // ========== PROFILE (JOBSEEKER) ==========
         composable(Routes.PROFILE) {
+            var showLogoutDialog by remember { mutableStateOf(false) }
 
-            val remote = remember { ProfileRemoteDataSource() }
+            val remote = remember { ProfileRemoteDataSource(AppGraph.pb, "users", "jobs") }
             val repository = remember { ProfileRepositoryImpl(remote) }
             val getProfile = remember { GetProfileUseCase(repository) }
             val getJobs = remember { GetJobsUseCase(repository) }
@@ -606,13 +759,22 @@ fun NavGraph(
                         onSettingsClick = {
                             navController.navigate(Routes.PROFILE_SETTINGS)
                         },
-                        onLogoutClick = {
-                            navController.navigate(Routes.signin("jobseeker")) {
-                                popUpTo(Routes.DISCOVER) { inclusive = true }
-                                launchSingleTop = true
-                            }
-                        }
+                        onLogoutClick = { showLogoutDialog = true }
                     )
+
+                    if (showLogoutDialog) {
+                        LogoutConfirmationDialog(
+                            onDismiss = { showLogoutDialog = false },
+                            onConfirm = {
+                                showLogoutDialog = false
+                                AppGraph.pb.clearAuth()
+                                navController.navigate(Routes.ONBOARDING) {
+                                    popUpTo(Routes.SPLASH) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -623,7 +785,7 @@ fun NavGraph(
         ) { backStackEntry ->
             val jobId = backStackEntry.arguments?.getString("jobId") ?: return@composable
 
-            val remote = remember { ProfileRemoteDataSource() }
+            val remote = remember { ProfileRemoteDataSource(AppGraph.pb, "users", "jobs") }
             val repository = remember { ProfileRepositoryImpl(remote) }
             val getJobDetail = remember { GetJobDetailUseCase(repository) }
 
@@ -669,6 +831,8 @@ fun NavGraph(
         }
 
         composable(Routes.PROFILE_SETTINGS) {
+            var showLogoutDialog by remember { mutableStateOf(false) }
+
             ProfileSettingsScreen(
                 onOpenProfile = {
                     navController.navigate(Routes.PROFILE_SEE_PROFILE)
@@ -681,13 +845,22 @@ fun NavGraph(
                 onOpenAboutApp = { /* TODO */ },
                 onOpenReport = { /* TODO */ },
                 onOpenTerms = { /* TODO */ },
-                onLogout = {
-                    navController.navigate(Routes.signin("jobseeker")) {
-                        popUpTo(Routes.DISCOVER) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
+                onLogout = { showLogoutDialog = true }
             )
+
+            if (showLogoutDialog) {
+                LogoutConfirmationDialog(
+                    onDismiss = { showLogoutDialog = false },
+                    onConfirm = {
+                        showLogoutDialog = false
+                        AppGraph.pb.clearAuth()
+                        navController.navigate(Routes.ONBOARDING) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
         }
 
         composable(Routes.PROFILE_SEE_PROFILE) {
@@ -738,6 +911,8 @@ fun NavGraph(
 
         // ========== RECRUITER PROFILE ==========
         composable(Routes.RECRUITER_PROFILE) {
+            var showLogoutDialog by remember { mutableStateOf(false) }
+
             RecruiterProfileRoute(
                 currentRoute = Routes.RECRUITER_PROFILE,
                 onTabSelected = { dest ->
@@ -745,13 +920,22 @@ fun NavGraph(
                         navController.navigate(dest) { launchSingleTop = true }
                     }
                 },
-                onLogoutToSignIn = {
-                    navController.navigate(Routes.signin("recruiter")) {
-                        popUpTo(Routes.RECRUITER_DASHBOARD) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
+                onLogoutToSignIn = { showLogoutDialog = true }
             )
+
+            if (showLogoutDialog) {
+                LogoutConfirmationDialog(
+                    onDismiss = { showLogoutDialog = false },
+                    onConfirm = {
+                        showLogoutDialog = false
+                        AppGraph.pb.clearAuth()
+                        navController.navigate(Routes.ONBOARDING) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
         }
 
 

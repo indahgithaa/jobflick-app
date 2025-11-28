@@ -5,10 +5,10 @@ import com.example.jobflick.features.jobseeker.roadmap.domain.model.RoadmapRole
 interface RoadmapRepository {
 
     /** List nama role yang tersedia (untuk layar pemilihan role) */
-    fun getAvailableRoles(): List<String>
+    suspend fun getAvailableRoles(): List<String>
 
     /** Detail roadmap untuk role tertentu */
-    fun getRoadmapRole(roleName: String): RoadmapRole
+    suspend fun getRoadmapRole(roleName: String): RoadmapRole
 
     /**
      * Hitung skor kuis dan update status modul di backend (dummy).
@@ -18,9 +18,16 @@ interface RoadmapRepository {
      * @param answers  list index jawaban user per soal (0-based)
      * @return score 0..100
      */
-    fun calculateQuizScore(
+    suspend fun calculateQuizScore(
         roleName: String,
         moduleId: String,
         answers: List<Int>
     ): Int
+
+    /**
+     * Mark an article as read and update progress.
+     *
+     * @param articleId id of the article
+     */
+    suspend fun markArticleAsRead(articleId: String)
 }

@@ -8,19 +8,23 @@ class RoadmapRepositoryImpl(
     private val remoteDataSource: RoadmapRemoteDataSource
 ) : RoadmapRepository {
 
-    override fun getAvailableRoles(): List<String> {
+    override suspend fun getAvailableRoles(): List<String> {
         return remoteDataSource.getAvailableRoles()
     }
 
-    override fun getRoadmapRole(roleName: String): RoadmapRole {
+    override suspend fun getRoadmapRole(roleName: String): RoadmapRole {
         return remoteDataSource.getRoadmapRole(roleName)
     }
 
-    override fun calculateQuizScore(
+    override suspend fun calculateQuizScore(
         roleName: String,
         moduleId: String,
         answers: List<Int>
     ): Int {
         return remoteDataSource.calculateQuizScore(roleName, moduleId, answers)
+    }
+
+    override suspend fun markArticleAsRead(articleId: String) {
+        remoteDataSource.markArticleAsRead(articleId)
     }
 }

@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.jobflick.core.ui.components.JFSearchBar
 import com.example.jobflick.core.ui.theme.Jost
-import com.example.jobflick.features.roadmap.presentation.rememberRoadmapViewModel
+import com.example.jobflick.features.jobseeker.roadmap.presentation.di.rememberRoadmapViewModel
 
 @Composable
 fun RoadmapScreen(

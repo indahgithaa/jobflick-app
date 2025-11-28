@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.jobflick.core.di.AppGraph
+import com.example.jobflick.core.global.AppGraph
 import kotlinx.coroutines.launch
 
 sealed class AuthState {

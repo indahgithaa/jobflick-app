@@ -5,5 +5,5 @@ import com.example.jobflick.features.jobseeker.roadmap.domain.repository.Roadmap
 class GetAvailableRolesUseCase(
     private val repository: RoadmapRepository
 ) {
-    operator fun invoke(): List<String> = repository.getAvailableRoles()
+    suspend operator fun invoke(): List<String> = repository.getAvailableRoles()
 }
