@@ -1,4 +1,10 @@
+package com.example.jobflick.features.auth.presentation
 
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,6 +35,7 @@ import com.example.jobflick.core.ui.theme.BluePrimary
 @Composable
 fun CompleteProfileScreen(
     role: String,
+    // callback tetap ada, dipanggil setelah user pilih file (tanpa mengubah signature)
     onPickPhoto: () -> Unit = {},
     onPickCV: () -> Unit = {},
     onSubmit: (
@@ -40,8 +48,10 @@ fun CompleteProfileScreen(
         portfolio: String?,
         photoName: String,
         cvName: String
-    ) -> Unit = { _,_,_,_,_,_,_,_,_ -> }
+    ) -> Unit = { _, _, _, _, _, _, _, _, _ -> }
 ) {
+    val context = LocalContext.current
+
     // ---- State ----
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -52,6 +62,31 @@ fun CompleteProfileScreen(
     var portfolio by remember { mutableStateOf("") }
     var photoName by remember { mutableStateOf("") }
     var cvName by remember { mutableStateOf("") }
+
+    // (opsional) kalau nanti mau dipakai upload ke server, bisa simpan Uri juga
+    var photoUri by remember { mutableStateOf<Uri?>(null) }
+    var cvUri by remember { mutableStateOf<Uri?>(null) }
+
+    // ==== LAUNCHER PICKER ====
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            photoUri = it
+            photoName = getFileNameFromUri(context, it)
+            onPickPhoto()
+        }
+    }
+
+    val cvPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            cvUri = it
+            cvName = getFileNameFromUri(context, it)
+            onPickCV()
+        }
+    }
 
     val eduOptions = listOf(
         "SMP/Sederajat", "SMA/SMK/Sederajat",
@@ -149,8 +184,8 @@ fun CompleteProfileScreen(
                 fileName = photoName,
                 placeholder = "Unggah foto diri (JPG/PNG)",
                 onPick = {
-                    onPickPhoto()
-                    photoName = "Foto.jpg"
+                    // buka image picker
+                    photoPickerLauncher.launch("image/*")
                 }
             )
 
@@ -289,8 +324,8 @@ fun CompleteProfileScreen(
                 fileName = cvName,
                 placeholder = "Unggah CV dalam format PDF",
                 onPick = {
-                    onPickCV()
-                    cvName = "CV.pdf"
+                    // buka file picker khusus PDF
+                    cvPickerLauncher.launch("application/pdf")
                 }
             )
 
@@ -380,6 +415,21 @@ private fun FilePickerField(
     }
 }
 
+/**
+ * Helper untuk ambil nama file dari Uri
+ */
+private fun getFileNameFromUri(context: Context, uri: Uri): String {
+    val cursor = context.contentResolver.query(uri, null, null, null, null)
+    cursor?.use {
+        val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (nameIndex != -1 && it.moveToFirst()) {
+            return it.getString(nameIndex)
+        }
+    }
+    // fallback kalau gagal ambil DISPLAY_NAME
+    return uri.lastPathSegment ?: "file"
+}
+
 @Preview(
     name = "CompleteProfileScreen - Jobseeker",
     showBackground = true,
@@ -392,7 +442,7 @@ private fun PreviewCompleteProfileJobseeker() {
             role = "jobseeker",
             onPickPhoto = { /* noop */ },
             onPickCV = { /* noop */ },
-            onSubmit = { _,_,_,_,_,_,_,_,_ -> /* noop */ }
+            onSubmit = { _, _, _, _, _, _, _, _, _ -> /* noop */ }
         )
     }
 }

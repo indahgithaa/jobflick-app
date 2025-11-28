@@ -1,6 +1,5 @@
 package com.example.jobflick.navigation
 
-import CompleteProfileScreen
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
@@ -15,6 +14,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.jobflick.features.auth.presentation.CompleteProfileScreen
 
 // ====== AUTH JOBSEEKER ======
 import com.example.jobflick.features.auth.presentation.JobSeekerDoneRegistScreen
@@ -64,8 +64,10 @@ import com.example.jobflick.features.recruiter.auth.presentation.screens.Recruit
 import com.example.jobflick.features.recruiter.auth.presentation.screens.RecruiterSignUpRoute
 
 // ====== RECRUITER MAIN TABS SCREENS ======
-import com.example.jobflick.features.recruiter.dashboard.presentation.screens.RecruiterDashboardScreen
+// ganti: gunakan Route (yang sudah setup ViewModel + Repository)
+import com.example.jobflick.features.recruiter.dashboard.presentation.RecruiterDashboardRoute
 import com.example.jobflick.features.recruiter.discover.presentation.screens.RecruiterDiscoverScreen
+import com.example.jobflick.features.recruiter.postjob.presentation.RecruiterPostJobRoute
 import com.example.jobflick.features.recruiter.profile.presentation.screens.RecruiterProfileScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -262,13 +264,13 @@ fun NavGraph(
                     navController.navigate(Routes.jobMatch(job.id))
                 },
                 onSave = { _ ->
-                    // TODO: simpan ke list "Disimpan" / kirim ke BE
+                    // TODO
                 },
                 onOpenDetail = { job ->
                     navController.navigate(Routes.discoverJobDetail(job.id))
                 },
                 onOpenFilter = {
-                    // TODO: buka sheet / screen filter
+                    // TODO
                 }
             )
         }
@@ -702,12 +704,19 @@ fun NavGraph(
 
         // ========== RECRUITER MAIN TABS ==========
         composable(Routes.RECRUITER_DASHBOARD) {
-            RecruiterDashboardScreen(
+            RecruiterDashboardRoute(
                 currentRoute = Routes.RECRUITER_DASHBOARD,
                 onTabSelected = { dest ->
                     if (dest != Routes.RECRUITER_DASHBOARD) {
                         navController.navigate(dest) { launchSingleTop = true }
                     }
+                },
+                onAddJobClick = {
+                    navController.navigate(Routes.RECRUITER_POST_JOB)
+                },
+                onJobClick = { jobId ->
+                    // nanti kalau ada detail, navigate ke sana
+                    // navController.navigate(Routes.recruiterJobDetail(jobId))
                 }
             )
         }
@@ -733,5 +742,23 @@ fun NavGraph(
                 }
             )
         }
+
+        // ========== RECRUITER POST JOB ==========
+        composable(Routes.RECRUITER_POST_JOB) {
+            RecruiterPostJobRoute(
+                currentRoute = Routes.RECRUITER_DASHBOARD, // ikon Dashboard tetap aktif
+                onTabSelected = { dest ->
+                    if (dest != Routes.RECRUITER_DASHBOARD) {
+                        navController.navigate(dest) { launchSingleTop = true }
+                    }
+                },
+                onBack = { navController.popBackStack() },
+                onSubmitSuccess = {
+                    // setelah sukses, balik ke dashboard
+                    navController.popBackStack()  // pop post job
+                }
+            )
+        }
+
     }
 }

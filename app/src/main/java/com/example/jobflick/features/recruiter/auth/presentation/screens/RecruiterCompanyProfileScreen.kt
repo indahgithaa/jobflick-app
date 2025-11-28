@@ -1,5 +1,10 @@
 package com.example.jobflick.features.recruiter.auth.presentation.screens
 
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -23,8 +29,8 @@ import androidx.compose.ui.unit.sp
 import com.example.jobflick.R
 import com.example.jobflick.core.ui.components.JFInputField
 import com.example.jobflick.core.ui.components.JFPrimaryButton
-import com.example.jobflick.core.ui.theme.BluePrimary
 import com.example.jobflick.core.ui.theme.Jost
+import com.example.jobflick.core.ui.theme.OrangePrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,8 +44,10 @@ fun RecruiterCompanyProfileScreen(
         website: String,
         logoFileName: String,
         description: String
-    ) -> Unit = { _,_,_,_,_,_,_ -> }
+    ) -> Unit = { _, _, _, _, _, _, _ -> }
 ) {
+    val context = LocalContext.current
+
     var companyName by remember { mutableStateOf("") }
     var industry by remember { mutableStateOf("") }
     var employeesCount by remember { mutableStateOf("") }
@@ -47,6 +55,20 @@ fun RecruiterCompanyProfileScreen(
     var website by remember { mutableStateOf("") }
     var logoFileName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+
+    // kalau nanti mau upload ke backend, Uri ini bisa dikirim ke ViewModel
+    var logoUri by remember { mutableStateOf<Uri?>(null) }
+
+    // ==== IMAGE PICKER UNTUK LOGO ====
+    val logoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            logoUri = it
+            logoFileName = getFileNameFromUri(context, it)
+            onPickCompanyLogo()
+        }
+    }
 
     val industryOptions = listOf(
         "Teknologi Informasi",
@@ -76,7 +98,7 @@ fun RecruiterCompanyProfileScreen(
             ) {
                 JFPrimaryButton(
                     text = "Lanjut",
-                    backgroundColor = if (isValid) BluePrimary else BluePrimary.copy(alpha = 0.35f),
+                    backgroundColor = if (isValid) OrangePrimary else OrangePrimary.copy(alpha = 0.35f),
                     onClick = {
                         if (isValid) {
                             onSubmit(
@@ -226,9 +248,8 @@ fun RecruiterCompanyProfileScreen(
                 fileName = logoFileName,
                 placeholder = "Unggah logo perusahaan (JPG/PNG)",
                 onPick = {
-                    onPickCompanyLogo()
-                    // simulasi nama file setelah dipilih
-                    logoFileName = if (logoFileName.isBlank()) "Company_Logo.png" else logoFileName
+                    // buka image picker
+                    logoPickerLauncher.launch("image/*")
                 }
             )
 
@@ -307,6 +328,21 @@ private fun CompanyLogoPickerField(
             unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
         )
     )
+}
+
+/**
+ * Helper untuk ambil nama file dari Uri
+ */
+private fun getFileNameFromUri(context: Context, uri: Uri): String {
+    val cursor = context.contentResolver.query(uri, null, null, null, null)
+    cursor?.use {
+        val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (nameIndex != -1 && it.moveToFirst()) {
+            return it.getString(nameIndex)
+        }
+    }
+    // fallback kalau gagal ambil DISPLAY_NAME
+    return uri.lastPathSegment ?: "file"
 }
 
 @Preview(showBackground = true, device = "spec:width=411dp,height=1600dp,dpi=420")

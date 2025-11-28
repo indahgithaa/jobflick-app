@@ -67,4 +67,8 @@ object Routes {
     const val RECRUITER_DASHBOARD = "recruiterDashboard"
     const val RECRUITER_DISCOVER = "recruiterDiscover"
     const val RECRUITER_PROFILE = "recruiterProfile"
+
+    // RECRUITER JOB POSTING
+    const val RECRUITER_POST_JOB = "recruiterPostJob"
+
 }
