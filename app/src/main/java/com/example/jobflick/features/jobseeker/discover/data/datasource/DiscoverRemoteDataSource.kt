@@ -44,6 +44,27 @@ class DiscoverRemoteDataSource(
         }
     }
 
+    suspend fun getAllJobs(): List<JobPosting> {
+        // Fetch all jobs
+        val jobsResponse = pb.getFullList(jobsCollection)
+
+        return jobsResponse.map { record ->
+            JobPosting(
+                id = record.id,
+                company = record.data["companyName"]?.jsonPrimitive?.content ?: "Unknown",
+                logoUrl = record.data["companyLogoUrl"]?.jsonPrimitive?.content,
+                location = record.data["location"]?.jsonPrimitive?.content ?: "Unknown",
+                title = record.data["jobTitle"]?.jsonPrimitive?.content ?: "Unknown",
+                postedAt = record.data["postedTimestamp"]?.jsonPrimitive?.content ?: "",
+                level = record.data["level"]?.jsonPrimitive?.content ?: "Unknown",
+                salary = record.data["salaryRange"]?.jsonPrimitive?.content ?: "Unknown",
+                workType = record.data["workType"]?.jsonPrimitive?.content ?: "Unknown",
+                skills = record.data["skills"]?.jsonPrimitive?.content?.split(";")?.map { it.trim() } ?: emptyList(),
+                about = record.data["description"]?.jsonPrimitive?.content ?: ""
+            )
+        }
+    }
+
     suspend fun postJobCategory(jobId: String, category: JobCategory) {
         val authResponse = pb.authRefresh(collection = profilesCollection)
         val userId = authResponse.record.id

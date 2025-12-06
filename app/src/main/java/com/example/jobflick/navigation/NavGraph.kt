@@ -286,10 +286,12 @@ fun NavGraph(
             DiscoverScreen(
                 onApply = { job ->
                     scope.launch {
-                        discoverRepository.postJobCategory(job.id, if (!hasApplied) JobCategory.MATCH else JobCategory.APPLIED)
+                        discoverRepository.postJobCategory(job.id, if (job.company == "Tokopedia") JobCategory.MATCH else JobCategory.APPLIED)
                         hasApplied = true
                     }
-                    navController.navigate(Routes.jobMatch(job.id))
+                    if (job.company == "Tokopedia") {
+                        navController.navigate(Routes.jobMatch(job.id))
+                    }
                 },
                 onSave = { job ->
                     scope.launch {
@@ -370,7 +372,7 @@ fun NavGraph(
                 try {
                     isLoading = true
                     error = null
-                    val jobs = remote.getDiscoverJobs()
+                    val jobs = remote.getAllJobs().filter { it.company == "Tokopedia" }
                     job = jobs.firstOrNull { it.id == jobId }
                 } catch (e: Exception) {
                     error = e.message ?: "Terjadi kesalahan"
