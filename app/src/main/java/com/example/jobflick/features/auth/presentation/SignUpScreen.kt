@@ -18,17 +18,19 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import com.example.jobflick.R
 import com.example.jobflick.core.ui.components.JFInputField
 import com.example.jobflick.core.ui.components.JFPrimaryButton
 import com.example.jobflick.core.ui.theme.BluePrimary
 import com.example.jobflick.core.ui.theme.Jost
-import com.example.jobflick.features.onboarding.presentation.RoleSelectionScreen
 
 @Composable
 fun SignUpScreen(
     onSubmit: (email: String, password: String) -> Unit,
-    onClickSignIn: () -> Unit
+    onClickSignIn: () -> Unit,
+    isLoading: Boolean = false
 ) {
     var email by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
@@ -37,7 +39,7 @@ fun SignUpScreen(
     val emailOk = '@' in email && '.' in email
     val passOk = pass.length >= 8
     val confirmOk = pass == confirm
-    val formOk = emailOk && passOk && confirmOk
+    val formOk = emailOk && passOk && confirmOk && !isLoading
 
     Column(
         modifier = Modifier
@@ -86,10 +88,11 @@ fun SignUpScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        // form
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(start = 24.dp, bottom = 6.dp, end = 24.dp)) {
-            Text("Email", fontFamily = Jost, fontSize = 14.sp, modifier = Modifier
-                .fillMaxWidth())
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(start = 24.dp, bottom = 6.dp, end = 24.dp)
+        ) {
+            Text("Email", fontFamily = Jost, fontSize = 14.sp, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
             JFInputField(
                 value = email,
@@ -99,8 +102,7 @@ fun SignUpScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            Text("Password", fontFamily = Jost, fontSize = 14.sp, modifier = Modifier
-                .fillMaxWidth())
+            Text("Password", fontFamily = Jost, fontSize = 14.sp, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
             JFInputField(
                 value = pass,
@@ -111,8 +113,7 @@ fun SignUpScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            Text("Ulangi Password", fontFamily = Jost, fontSize = 14.sp, modifier = Modifier
-                .fillMaxWidth())
+            Text("Ulangi Password", fontFamily = Jost, fontSize = 14.sp, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
             JFInputField(
                 value = confirm,
@@ -124,16 +125,14 @@ fun SignUpScreen(
 
         Spacer(Modifier.height(48.dp))
 
-        // button
         JFPrimaryButton(
-            text = "Daftar",
+            text = if (isLoading) "Memproses..." else "Daftar",
             backgroundColor = if (formOk) BluePrimary else BluePrimary.copy(alpha = 0.25f),
             onClick = { if (formOk) onSubmit(email, pass) }
         )
 
         Spacer(Modifier.height(16.dp))
 
-        // sdh pnya akun
         val annotated = buildAnnotatedString {
             append("Sudah punya akun? ")
             withStyle(SpanStyle(color = BluePrimary, fontWeight = FontWeight.Medium)) {
@@ -151,14 +150,39 @@ fun SignUpScreen(
         )
     }
 }
+@Composable
+fun SignUpRoute(
+    role: String,
+    onSignedUp: () -> Unit,
+    onClickSignIn: () -> Unit,
+    vm: AuthViewModel = viewModel()
+) {
+    val state = vm.authState
+    val snack = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(state) {
+        when (state) {
+            is AuthState.Success -> onSignedUp()
+            is AuthState.Error -> scope.launch { snack.showSnackbar(state.message) }
+            else -> Unit
+        }
+    }
+
+    Scaffold(snackbarHost = { SnackbarHost(snack) }) { _ ->
+        SignUpScreen(
+            onSubmit = { email, pass ->
+                val name = email.substringBefore('@').ifBlank { "User" }
+                vm.signUp(email, pass, name, role)
+            },
+            onClickSignIn = onClickSignIn,
+            isLoading = state is AuthState.Loading
+        )
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
 private fun SignUpPreview() {
-    Surface {
-        SignUpScreen(
-            onSubmit = { _, _ -> },
-            onClickSignIn = {}
-        )
-    }
+    Surface { SignUpScreen(onSubmit = { _, _ -> }, onClickSignIn = {}) }
 }

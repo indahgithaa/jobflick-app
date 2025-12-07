@@ -3,9 +3,7 @@ package com.example.jobflick.features.auth.presentation
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +18,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import com.example.jobflick.R
 import com.example.jobflick.core.ui.components.JFInputField
 import com.example.jobflick.core.ui.components.JFPrimaryButton
@@ -29,14 +29,15 @@ import com.example.jobflick.core.ui.theme.Jost
 @Composable
 fun SignInScreen(
     onSubmit: (email: String, password: String) -> Unit,
-    onClickSignUp: () -> Unit
+    onClickSignUp: () -> Unit,
+    isLoading: Boolean = false
 ) {
     var email by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
 
     val emailOk = '@' in email && '.' in email
     val passOk = pass.isNotBlank()
-    val formOk = emailOk && passOk
+    val formOk = emailOk && passOk && !isLoading
 
     Column(
         modifier = Modifier
@@ -85,10 +86,11 @@ fun SignInScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        // form
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(start = 24.dp, bottom = 6.dp, end = 24.dp)) {
-            Text("Email", fontFamily = Jost, fontSize = 14.sp, modifier = Modifier
-                .fillMaxWidth())
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(start = 24.dp, bottom = 6.dp, end = 24.dp)
+        ) {
+            Text("Email", fontFamily = Jost, fontSize = 14.sp, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
             JFInputField(
                 value = email,
@@ -98,8 +100,7 @@ fun SignInScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            Text("Password", fontFamily = Jost, fontSize = 14.sp, modifier = Modifier
-                .fillMaxWidth())
+            Text("Password", fontFamily = Jost, fontSize = 14.sp, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
             JFInputField(
                 value = pass,
@@ -111,16 +112,14 @@ fun SignInScreen(
 
         Spacer(Modifier.height(48.dp))
 
-        // button masuk
         JFPrimaryButton(
-            text = "Masuk",
+            text = if (isLoading) "Memproses..." else "Masuk",
             backgroundColor = if (formOk) BluePrimary else BluePrimary.copy(alpha = 0.25f),
             onClick = { if (formOk) onSubmit(email, pass) }
         )
 
         Spacer(Modifier.height(16.dp))
 
-        // blm pnya akun
         val annotated = buildAnnotatedString {
             append("Belum punya akun? ")
             withStyle(SpanStyle(color = BluePrimary, fontWeight = FontWeight.Medium)) {
@@ -139,13 +138,37 @@ fun SignInScreen(
     }
 }
 
+@Composable
+fun SignInRoute(
+    onSignedIn: () -> Unit,
+    onClickSignUp: () -> Unit,
+    vm: AuthViewModel = viewModel()
+) {
+    val state = vm.authState
+    val snack = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(state) {
+        when (state) {
+            is AuthState.Success -> onSignedIn()
+            is AuthState.Error -> scope.launch { snack.showSnackbar(state.message) }
+            else -> Unit
+        }
+    }
+
+    Scaffold(snackbarHost = { SnackbarHost(snack) }) { _ ->
+        SignInScreen(
+            onSubmit = { email, pass -> vm.signIn(email, pass) },
+            onClickSignUp = onClickSignUp,
+            isLoading = state is AuthState.Loading
+        )
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun SignInPreview() {
     Surface {
-        SignInScreen(
-            onSubmit = { _, _ -> },
-            onClickSignUp = {}
-        )
+        SignInScreen(onSubmit = { _, _ -> }, onClickSignUp = {})
     }
 }
